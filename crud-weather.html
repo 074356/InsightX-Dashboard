@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>InsightX Dashboard - CRUD Page</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>InsightX Dashboard</h1>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="weather.html">🌤 Weather Dashboard</a></li>
+        <li><a href="sports.html">⚽ Sports Dashboard</a></li>
+        <li><a href="crud-weather.html" class="active">🛠 CRUD Page</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h2>CRUD Feature (Placeholder)</h2>
+      <p>This page will be used for managing weather data in the future.</p>
+
+      <form id="crud-form">
+        <label for="data-input">Data Input:</label><br />
+        <input type="text" id="data-input" name="data-input" placeholder="Enter some data" required />
+        <button type="submit">Add</button>
+      </form>
+
+      <h3>Data Table</h3>
+      <table id="data-table" border="1" cellpadding="8" cellspacing="0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Data</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows will appear here -->
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 InsightX Dashboard. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const form = document.getElementById('crud-form');
+    const input = document.getElementById('data-input');
+    const tableBody = document.querySelector('#data-table tbody');
+
+    let dataEntries = [];
+    let currentId = 1;
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      addEntry(input.value.trim());
+      input.value = '';
+    });
+
+    function addEntry(data) {
+      if (data === '') return;
+
+      const entry = { id: currentId++, data };
+      dataEntries.push(entry);
+      renderTable();
+    }
+
+    function renderTable() {
+      tableBody.innerHTML = '';
+      dataEntries.forEach(entry => {
+        const tr = document.createElement('tr');
+
+        const tdId = document.createElement('td');
+        tdId.textContent = entry.id;
+
+        const tdData = document.createElement('td');
+        tdData.textContent = entry.data;
+
+        const tdActions = document.createElement('td');
+
+        // Edit button
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.onclick = () => editEntry(entry.id);
+
+        // Delete button
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Delete';
+        delBtn.onclick = () => deleteEntry(entry.id);
+
+        tdActions.appendChild(editBtn);
+        tdActions.appendChild(delBtn);
+
+        tr.appendChild(tdId);
+        tr.appendChild(tdData);
+        tr.appendChild(tdActions);
+
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function editEntry(id) {
+      const entry = dataEntries.find(e => e.id === id);
+      if (!entry) return;
+      const newData = prompt('Edit the data:', entry.data);
+      if (newData !== null && newData.trim() !== '') {
+        entry.data = newData.trim();
+        renderTable();
+      }
+    }
+
+    function deleteEntry(id) {
+      dataEntries = dataEntries.filter(e => e.id !== id);
+      renderTable();
+    }
+  </script>
+</body>
+</html>
