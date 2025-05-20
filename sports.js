@@ -1,16 +1,18 @@
-const searchBtn = document.getElementById('searchBtn');
-const teamInput = document.getElementById('teamInput');
-const teamInfoSection = document.getElementById('teamInfo');
-const eventsSection = document.getElementById('eventsSection');
-const messageEl = document.getElementById('message');
+// DOM elements
+const searchBtn        = document.getElementById('searchBtn');
+const teamInput        = document.getElementById('teamInput');
+const messageEl        = document.getElementById('message');
+const teamInfoSection  = document.getElementById('teamInfo');
+const eventsSection    = document.getElementById('eventsSection');
 
-const teamNameEl = document.getElementById('teamName');
-const stadiumEl = document.getElementById('stadium');
-const descriptionEl = document.getElementById('description');
-const teamBadgeEl = document.getElementById('teamBadge');
+const teamNameEl       = document.getElementById('teamName');
+const stadiumEl        = document.getElementById('stadium');
+const descriptionEl    = document.getElementById('description');
+const teamBadgeEl      = document.getElementById('teamBadge');
 
 let eventsChart = null;
 
+// On click Search
 searchBtn.addEventListener('click', () => {
   const teamName = teamInput.value.trim();
   if (!teamName) {
@@ -23,14 +25,19 @@ searchBtn.addEventListener('click', () => {
   fetchTeamData(teamName);
 });
 
+// 1) Fetch basic team info
 function fetchTeamData(teamName) {
-  fetch(`https://www.thesportsdb.com/api/v1/json/1/searchteams.php?t=${encodeURIComponent(teamName)}`)
-    .then(res => res.json())
+  const url = `https://www.thesportsdb.com/api/v1/json/1/searchteams.php?t=${encodeURIComponent(teamName)}`;
+  fetch(url)
+    .then(res => {
+      if (!res.ok) throw new Error(`Team lookup failed (HTTP ${res.status})`);
+      return res.json();
+    })
     .then(data => {
-      if (!data.teams) throw new Error('Team not found');
+      if (!data.teams) throw new Error('Team not found. Try another name.');
       const team = data.teams[0];
       displayTeamInfo(team);
-      fetchUpcomingEvents(team.idTeam);    // Pass the real team ID
+      fetchUpcomingEvents(team.idTeam);
     })
     .catch(err => {
       messageEl.textContent = err.message;
@@ -39,23 +46,32 @@ function fetchTeamData(teamName) {
     });
 }
 
+// 2) Display team info in the DOM
 function displayTeamInfo(team) {
-  teamNameEl.textContent = team.strTeam;
-  stadiumEl.textContent = team.strStadium;
+  teamNameEl.textContent    = team.strTeam;
+  stadiumEl.textContent     = team.strStadium;
   descriptionEl.textContent = team.strDescriptionEN
     ? team.strDescriptionEN.substring(0, 300) + '…'
     : 'No description available.';
-  teamBadgeEl.src = team.strTeamBadge;
-  teamBadgeEl.alt = team.strTeam;
+  teamBadgeEl.src           = team.strTeamBadge;
+  teamBadgeEl.alt           = team.strTeam;
+
   teamInfoSection.style.display = 'block';
 }
 
-// **Updated** to use eventsnext.php and pass teamId into chart logic
+// 3) Fetch next 5 upcoming events
 function fetchUpcomingEvents(teamId) {
-  fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id=${teamId}`)
-    .then(res => res.json())
+  const url = `https://www.thesportsdb.com/api/v1/json/1/eventsnext.php?id=${teamId}`;
+  fetch(url)
+    .then(res => {
+      if (!res.ok) throw new Error(`Events lookup failed (HTTP ${res.status})`);
+      return res.json();
+    })
     .then(data => {
-      if (!data.events) throw new Error('No upcoming event data found');
+      console.log('Events response:', data);
+      if (!data.events || data.events.length === 0) {
+        throw new Error('No upcoming events found.');
+      }
       displayEventsChart(data.events, teamId);
     })
     .catch(err => {
@@ -64,35 +80,54 @@ function fetchUpcomingEvents(teamId) {
     });
 }
 
+// 4) Render the bar chart
 function displayEventsChart(events, teamId) {
   eventsSection.style.display = 'block';
 
-  // Dates for labels
-  const labels = events.map(e => 
+  // Labels = event dates
+  const labels = events.map(e =>
     new Date(e.dateEvent).toLocaleDateString()
   );
 
-  // Map to points using the real teamId
+  // Points: Win=3, Draw=1, Loss=0
   const points = events.map(e => {
     if (e.intHomeScore == null || e.intAwayScore == null) return 0;
     const isHome = e.idHomeTeam === teamId;
     const teamScore = isHome ? +e.intHomeScore : +e.intAwayScore;
-    const oppScore  = isHome ? +e.intAwayScore : +e.intHomeScore;
+    const oppScore  = isHome ? +e.intAwayScore  : +e.intHomeScore;
     if (teamScore > oppScore) return 3;
     if (teamScore === oppScore) return 1;
     return 0;
   });
 
+  // Destroy old chart if exists
   if (eventsChart) eventsChart.destroy();
+
+  // Create new Chart.js bar chart
   const ctx = document.getElementById('eventsChart').getContext('2d');
   eventsChart = new Chart(ctx, {
     type: 'bar',
-    data: { labels, datasets: [{ data: points,
-      backgroundColor: points.map(p => p===3?'green':p===1?'orange':'red')
-    }]},
+    data: {
+      labels,
+      datasets: [{
+        label: 'Points per Match',
+        data: points,
+        backgroundColor: points.map(p =>
+          p === 3 ? 'green' :
+          p === 1 ? 'orange' : 'red'
+        )
+      }]
+    },
     options: {
       scales: {
-        y: { beginAtZero: true, max: 3, ticks: { stepSize: 1 } }
+        y: {
+          beginAtZero: true,
+          max: 3,
+          ticks: { stepSize: 1 }
+        }
+      },
+      plugins: {
+        legend: { display: false }
       }
     }
   });
