@@ -15,6 +15,8 @@ searchBtn.addEventListener('click', () => {
   const teamName = teamInput.value.trim();
   if (!teamName) {
     messageEl.textContent = "Please enter a team name.";
+    teamInfoSection.style.display = 'none';
+    eventsSection.style.display = 'none';
     return;
   }
   messageEl.textContent = '';
@@ -22,101 +24,72 @@ searchBtn.addEventListener('click', () => {
 });
 
 function fetchTeamData(teamName) {
-  const url = `https://www.thesportsdb.com/api/v1/json/1/searchteams.php?t=${encodeURIComponent(teamName)}`;
-  
-  fetch(url)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not OK');
-      }
-      return response.json();
-    })
+  fetch(`https://www.thesportsdb.com/api/v1/json/1/searchteams.php?t=${encodeURIComponent(teamName)}`)
+    .then(res => res.json())
     .then(data => {
-      if (!data.teams) {
-        messageEl.textContent = "Team not found. Try a different name.";
-        teamInfoSection.style.display = 'none';
-        eventsSection.style.display = 'none';
-        return;
-      }
+      if (!data.teams) throw new Error('Team not found');
       const team = data.teams[0];
       displayTeamInfo(team);
-      fetchRecentEvents(team.idTeam);
+      fetchUpcomingEvents(team.idTeam);    // Pass the real team ID
     })
-    .catch(error => {
-      messageEl.textContent = 'Error fetching team data. Please try again later.';
-      console.error('Fetch error:', error);
+    .catch(err => {
+      messageEl.textContent = err.message;
       teamInfoSection.style.display = 'none';
       eventsSection.style.display = 'none';
     });
 }
 
 function displayTeamInfo(team) {
-  teamNameEl.textContent = team.strTeam || 'N/A';
-  stadiumEl.textContent = team.strStadium || 'N/A';
-  descriptionEl.textContent = team.strDescriptionEN ? team.strDescriptionEN.substring(0, 300) + '...' : 'No description available.';
-  teamBadgeEl.src = team.strTeamBadge || '';
-  teamBadgeEl.alt = team.strTeam || 'Team Badge';
-
+  teamNameEl.textContent = team.strTeam;
+  stadiumEl.textContent = team.strStadium;
+  descriptionEl.textContent = team.strDescriptionEN
+    ? team.strDescriptionEN.substring(0, 300) + '…'
+    : 'No description available.';
+  teamBadgeEl.src = team.strTeamBadge;
+  teamBadgeEl.alt = team.strTeam;
   teamInfoSection.style.display = 'block';
 }
 
-function fetchRecentEvents(teamId) {
-  const url = `https://www.thesportsdb.com/api/v1/json/1/eventslast.php?id=${teamId}`;
-
-  fetch(url)
-    .then(response => response.json())
+// **Updated** to use eventsnext.php and pass teamId into chart logic
+function fetchUpcomingEvents(teamId) {
+  fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id=${teamId}`)
+    .then(res => res.json())
     .then(data => {
-      if (!data.results) {
-        messageEl.textContent = "No recent event data found.";
-        eventsSection.style.display = 'none';
-        return;
-      }
-      displayEventsChart(data.results);
+      if (!data.events) throw new Error('No upcoming event data found');
+      displayEventsChart(data.events, teamId);
     })
-    .catch(error => {
-      messageEl.textContent = "Error fetching recent events.";
-      console.error('Events fetch error:', error);
+    .catch(err => {
+      messageEl.textContent = err.message;
       eventsSection.style.display = 'none';
     });
 }
 
-function displayEventsChart(events) {
+function displayEventsChart(events, teamId) {
   eventsSection.style.display = 'block';
 
-  // Prepare data: show last 5 match results (win/loss/draw) with scores
-  const labels = events.map(ev => {
-    const date = new Date(ev.dateEvent);
-    return date.toLocaleDateString();
-  }).reverse();
+  // Dates for labels
+  const labels = events.map(e => 
+    new Date(e.dateEvent).toLocaleDateString()
+  );
 
-  // Map results to points (win=3, draw=1, loss=0) for visualization
-  const points = events.map(ev => {
-    if (ev.intHomeScore === null || ev.intAwayScore === null) return 0;
-
-    let isHomeTeam = ev.idHomeTeam === ev.idTeam;
-    let teamScore = isHomeTeam ? +ev.intHomeScore : +ev.intAwayScore;
-    let oppScore = isHomeTeam ? +ev.intAwayScore : +ev.intHomeScore;
-
+  // Map to points using the real teamId
+  const points = events.map(e => {
+    if (e.intHomeScore == null || e.intAwayScore == null) return 0;
+    const isHome = e.idHomeTeam === teamId;
+    const teamScore = isHome ? +e.intHomeScore : +e.intAwayScore;
+    const oppScore  = isHome ? +e.intAwayScore : +e.intHomeScore;
     if (teamScore > oppScore) return 3;
     if (teamScore === oppScore) return 1;
     return 0;
-  }).reverse();
+  });
 
-  if (eventsChart) {
-    eventsChart.destroy();
-  }
-
+  if (eventsChart) eventsChart.destroy();
   const ctx = document.getElementById('eventsChart').getContext('2d');
   eventsChart = new Chart(ctx, {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Points per Match (Win=3, Draw=1, Loss=0)',
-        data: points,
-        backgroundColor: points.map(p => p === 3 ? 'green' : p === 1 ? 'orange' : 'red'),
-      }]
-    },
+    data: { labels, datasets: [{ data: points,
+      backgroundColor: points.map(p => p===3?'green':p===1?'orange':'red')
+    }]},
     options: {
       scales: {
         y: { beginAtZero: true, max: 3, ticks: { stepSize: 1 } }
