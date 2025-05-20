@@ -14,7 +14,7 @@
       <ul class="nav-menu">
         <li><a href="index.html">Home</a></li>
         <li><a href="weather.html">Weather Dashboard</a></li>
-        <li><a href="sports.html">Sports Dashboard</a></li>
+        <li><a href="sports.html" class="active">Sports Dashboard</a></li>
         <li><a href="crud-weather.html">CRUD Page</a></li>
       </ul>
     </nav>
@@ -25,6 +25,7 @@
       <h2>Search EPL Team</h2>
       <input type="text" id="teamInput" placeholder="Enter team name (e.g., Arsenal)" />
       <button id="searchBtn">Search</button>
+      <p id="message" style="color:red;"></p>
     </section>
 
     <section id="teamInfo" style="display:none;">
@@ -36,11 +37,9 @@
     </section>
 
     <section id="eventsSection" style="display:none;">
-      <h3>Recent Events</h3>
+      <h3>Upcoming Events</h3>
       <canvas id="eventsChart"></canvas>
     </section>
-
-    <section id="message" style="color:red;"></section>
   </main>
 
   <footer>
