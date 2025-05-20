@@ -3,44 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>InsightX Dashboard - Sports</title>
+  <title>InsightX Dashboard - Sports (EPL Teams)</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <header>
-    <h1>InsightX Dashboard</h1>
+    <h1>Sports Dashboard - EPL Teams Stats</h1>
     <nav>
-      <ul>
+      <ul class="nav-menu">
         <li><a href="index.html">Home</a></li>
-        <li><a href="weather.html">🌤 Weather Dashboard</a></li>
-        <li><a href="sports.html" class="active">⚽ Sports Dashboard</a></li>
-        <li><a href="crud-weather.html">🛠 CRUD Page</a></li>
+        <li><a href="weather.html">Weather Dashboard</a></li>
+        <li><a href="sports.html">Sports Dashboard</a></li>
+        <li><a href="crud-weather.html">CRUD Page</a></li>
       </ul>
     </nav>
   </header>
 
   <main>
     <section>
-      <h2>Sports Dashboard - English Premier League (EPL) Teams Stats</h2>
-      <p>Search for a team to see recent event results and stats.</p>
-      <form id="team-form">
-        <input type="text" id="team-input" placeholder="Enter EPL team name (e.g., Arsenal)" required />
-        <button type="submit">Search</button>
-      </form>
-
-      <div id="loading" style="display:none;">Loading data...</div>
-      <div id="error" style="color:red;"></div>
-
-      <div id="team-info" style="display:none;">
-        <h3 id="team-name"></h3>
-        <p><strong>Formed Year:</strong> <span id="formed-year"></span></p>
-        <p><strong>Stadium:</strong> <span id="stadium"></span></p>
-        <p><strong>Location:</strong> <span id="location"></span></p>
-      </div>
-
-      <canvas id="resultsChart" style="max-width: 100%; height: 300px;"></canvas>
+      <h2>Search EPL Team</h2>
+      <input type="text" id="teamInput" placeholder="Enter team name (e.g., Arsenal)" />
+      <button id="searchBtn">Search</button>
     </section>
+
+    <section id="teamInfo" style="display:none;">
+      <h3>Team Info</h3>
+      <p><strong>Name:</strong> <span id="teamName"></span></p>
+      <p><strong>Stadium:</strong> <span id="stadium"></span></p>
+      <p><strong>Description:</strong> <span id="description"></span></p>
+      <img id="teamBadge" alt="Team Badge" width="150" />
+    </section>
+
+    <section id="eventsSection" style="display:none;">
+      <h3>Recent Events</h3>
+      <canvas id="eventsChart"></canvas>
+    </section>
+
+    <section id="message" style="color:red;"></section>
   </main>
 
   <footer>
