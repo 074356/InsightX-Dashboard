@@ -1,106 +1,125 @@
-const form = document.getElementById('team-form');
-const teamInput = document.getElementById('team-input');
-const loading = document.getElementById('loading');
-const errorDiv = document.getElementById('error');
-const teamInfo = document.getElementById('team-info');
-const teamNameEl = document.getElementById('team-name');
-const formedYearEl = document.getElementById('formed-year');
+const searchBtn = document.getElementById('searchBtn');
+const teamInput = document.getElementById('teamInput');
+const teamInfoSection = document.getElementById('teamInfo');
+const eventsSection = document.getElementById('eventsSection');
+const messageEl = document.getElementById('message');
+
+const teamNameEl = document.getElementById('teamName');
 const stadiumEl = document.getElementById('stadium');
-const locationEl = document.getElementById('location');
-const ctx = document.getElementById('resultsChart').getContext('2d');
+const descriptionEl = document.getElementById('description');
+const teamBadgeEl = document.getElementById('teamBadge');
 
-let resultsChart;
+let eventsChart = null;
 
-form.addEventListener('submit', e => {
-  e.preventDefault();
+searchBtn.addEventListener('click', () => {
   const teamName = teamInput.value.trim();
-  if (teamName) {
-    fetchTeamData(teamName);
+  if (!teamName) {
+    messageEl.textContent = "Please enter a team name.";
+    return;
   }
+  messageEl.textContent = '';
+  fetchTeamData(teamName);
 });
 
-async function fetchTeamData(teamName) {
-  errorDiv.textContent = '';
-  teamInfo.style.display = 'none';
-  if(resultsChart) resultsChart.destroy();
-  loading.style.display = 'block';
-
-  try {
-    // Search for the team
-    const teamRes = await fetch(`https://www.thesportsdb.com/api/v1/json/1/searchteams.php?t=${encodeURIComponent(teamName)}`);
-    const teamData = await teamRes.json();
-
-    if(!teamData.teams) throw new Error('Team not found. Please try another.');
-
-    const team = teamData.teams[0];
-
-    displayTeamInfo(team);
-
-    // Fetch last 10 events for the team
-    const eventsRes = await fetch(`https://www.thesportsdb.com/api/v1/json/1/eventslast.php?id=${team.idTeam}`);
-    const eventsData = await eventsRes.json();
-
-    if(!eventsData.results) throw new Error('No recent events found.');
-
-    displayResultsChart(eventsData.results);
-
-  } catch(err) {
-    errorDiv.textContent = err.message;
-  } finally {
-    loading.style.display = 'none';
-  }
+function fetchTeamData(teamName) {
+  const url = `https://www.thesportsdb.com/api/v1/json/1/searchteams.php?t=${encodeURIComponent(teamName)}`;
+  
+  fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not OK');
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (!data.teams) {
+        messageEl.textContent = "Team not found. Try a different name.";
+        teamInfoSection.style.display = 'none';
+        eventsSection.style.display = 'none';
+        return;
+      }
+      const team = data.teams[0];
+      displayTeamInfo(team);
+      fetchRecentEvents(team.idTeam);
+    })
+    .catch(error => {
+      messageEl.textContent = 'Error fetching team data. Please try again later.';
+      console.error('Fetch error:', error);
+      teamInfoSection.style.display = 'none';
+      eventsSection.style.display = 'none';
+    });
 }
 
 function displayTeamInfo(team) {
-  teamNameEl.textContent = team.strTeam;
-  formedYearEl.textContent = team.intFormedYear;
-  stadiumEl.textContent = team.strStadium;
-  locationEl.textContent = team.strStadiumLocation;
+  teamNameEl.textContent = team.strTeam || 'N/A';
+  stadiumEl.textContent = team.strStadium || 'N/A';
+  descriptionEl.textContent = team.strDescriptionEN ? team.strDescriptionEN.substring(0, 300) + '...' : 'No description available.';
+  teamBadgeEl.src = team.strTeamBadge || '';
+  teamBadgeEl.alt = team.strTeam || 'Team Badge';
 
-  teamInfo.style.display = 'block';
+  teamInfoSection.style.display = 'block';
 }
 
-function displayResultsChart(events) {
-  // We'll show a bar chart of last 10 match results: Win, Draw, Loss counts
+function fetchRecentEvents(teamId) {
+  const url = `https://www.thesportsdb.com/api/v1/json/1/eventslast.php?id=${teamId}`;
 
-  let winCount = 0, drawCount = 0, lossCount = 0;
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      if (!data.results) {
+        messageEl.textContent = "No recent event data found.";
+        eventsSection.style.display = 'none';
+        return;
+      }
+      displayEventsChart(data.results);
+    })
+    .catch(error => {
+      messageEl.textContent = "Error fetching recent events.";
+      console.error('Events fetch error:', error);
+      eventsSection.style.display = 'none';
+    });
+}
 
-  events.forEach(event => {
-    if(event.intHomeScore !== null && event.intAwayScore !== null) {
-      const isHome = (event.strHomeTeam === event.strTeam);
-      const teamScore = isHome ? parseInt(event.intHomeScore) : parseInt(event.intAwayScore);
-      const oppScore = isHome ? parseInt(event.intAwayScore) : parseInt(event.intHomeScore);
+function displayEventsChart(events) {
+  eventsSection.style.display = 'block';
 
-      if(teamScore > oppScore) winCount++;
-      else if(teamScore === oppScore) drawCount++;
-      else lossCount++;
-    }
-  });
+  // Prepare data: show last 5 match results (win/loss/draw) with scores
+  const labels = events.map(ev => {
+    const date = new Date(ev.dateEvent);
+    return date.toLocaleDateString();
+  }).reverse();
 
-  if(resultsChart) resultsChart.destroy();
+  // Map results to points (win=3, draw=1, loss=0) for visualization
+  const points = events.map(ev => {
+    if (ev.intHomeScore === null || ev.intAwayScore === null) return 0;
 
-  resultsChart = new Chart(ctx, {
+    let isHomeTeam = ev.idHomeTeam === ev.idTeam;
+    let teamScore = isHomeTeam ? +ev.intHomeScore : +ev.intAwayScore;
+    let oppScore = isHomeTeam ? +ev.intAwayScore : +ev.intHomeScore;
+
+    if (teamScore > oppScore) return 3;
+    if (teamScore === oppScore) return 1;
+    return 0;
+  }).reverse();
+
+  if (eventsChart) {
+    eventsChart.destroy();
+  }
+
+  const ctx = document.getElementById('eventsChart').getContext('2d');
+  eventsChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['Wins', 'Draws', 'Losses'],
+      labels,
       datasets: [{
-        label: 'Last 10 Match Results',
-        data: [winCount, drawCount, lossCount],
-        backgroundColor: ['#4caf50', '#ffc107', '#f44336']
+        label: 'Points per Match (Win=3, Draw=1, Loss=0)',
+        data: points,
+        backgroundColor: points.map(p => p === 3 ? 'green' : p === 1 ? 'orange' : 'red'),
       }]
     },
     options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: true }
-      },
       scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { stepSize: 1 },
-          title: { display: true, text: 'Number of Matches' }
-        }
+        y: { beginAtZero: true, max: 3, ticks: { stepSize: 1 } }
       }
     }
   });
