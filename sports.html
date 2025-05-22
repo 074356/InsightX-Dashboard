@@ -14,7 +14,7 @@
       text-align: center;
     }
     header {
-      background-color: #005b96;
+      background-color: #002d72;
       color: white;
       padding: 20px;
     }
@@ -56,14 +56,14 @@
       padding: 10px 15px;
       font-size: 1em;
       margin-left: 10px;
-      background-color: #005b96;
+      background-color: #002d72;
       color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #004080;
+      background-color: #001b4e;
     }
     #loading {
       font-weight: bold;
@@ -79,10 +79,13 @@
       margin-top: 20px;
       display: none;
     }
-    #team-info img {
-      max-width: 150px;
+    #team-info h2 {
+      margin-bottom: 10px;
+    }
+    #team-badge {
+      max-height: 100px;
       margin-top: 10px;
-      border-radius: 8px;
+      display: none;
     }
     pre {
       background-color: #eee;
@@ -105,18 +108,18 @@
         <li><a href="index.html">🏠 Home</a></li>
         <li><a href="weather.html">🌤 Weather Dashboard</a></li>
         <li><a href="sports.html">⚽ Sports Dashboard</a></li>
-        <li><a href="crud-weather.html">🛠 CRUD Page</a></li>
+        <li><a href="crud-sports.html">🛠 CRUD Page</a></li>
       </ul>
     </nav>
   </header>
 
   <main>
-    <h2>Search Sports Team</h2>
-    <p>Enter a team name below to get its info.</p>
+    <h2>Search Your Favourite Team</h2>
+    <p>Type a football team name (e.g., Arsenal, Manchester United)</p>
 
-    <form id="search-form">
-      <input type="text" id="team-input" placeholder="e.g., Arsenal" required />
-      <button type="submit">Search Team</button>
+    <form id="team-form">
+      <input type="text" id="team-input" placeholder="Enter team name..." required />
+      <button type="submit">Search</button>
     </form>
 
     <div id="loading">Loading...</div>
@@ -124,62 +127,58 @@
 
     <div id="team-info">
       <h2 id="team-name"></h2>
+      <img id="team-badge" src="" alt="Team Badge">
       <p><strong>Stadium:</strong> <span id="stadium"></span></p>
       <p><strong>Country:</strong> <span id="country"></span></p>
-      <img id="team-badge" src="" alt="Team Badge" />
     </div>
 
-    <h3>Raw JSON Data</h3>
+    <h3>Raw JSON Data (Team Info)</h3>
     <pre id="raw-json"></pre>
   </main>
 
   <script>
-    const form = document.getElementById('search-form');
-    const teamInput = document.getElementById('team-input');
+    const form = document.getElementById('team-form');
+    const input = document.getElementById('team-input');
     const loading = document.getElementById('loading');
     const errorDiv = document.getElementById('error');
     const teamInfo = document.getElementById('team-info');
     const teamName = document.getElementById('team-name');
     const stadium = document.getElementById('stadium');
     const country = document.getElementById('country');
-    const teamBadge = document.getElementById('team-badge');
+    const badge = document.getElementById('team-badge');
     const rawJson = document.getElementById('raw-json');
-
-    const apiKey = '3'; // Free test API key for TheSportsDB
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const team = teamInput.value.trim();
+      const team = input.value.trim();
       if (!team) return;
 
+      loading.style.display = 'block';
       errorDiv.textContent = '';
       teamInfo.style.display = 'none';
+      badge.style.display = 'none';
       rawJson.textContent = '';
-      loading.style.display = 'block';
 
       try {
-        const url = `https://www.thesportsdb.com/api/v1/json/${apiKey}/searchteams.php?t=${encodeURIComponent(team)}`;
-        const response = await fetch(url);
+        const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(team)}`);
+        if (!res.ok) throw new Error('Network error');
 
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-
+        const data = await res.json();
         if (!data.teams) throw new Error('Team not found');
 
-        // Use the first matched team
         const teamData = data.teams[0];
 
-        teamName.textContent = teamData.strTeam || 'N/A';
+        teamName.textContent = teamData.strTeam;
         stadium.textContent = teamData.strStadium || 'N/A';
         country.textContent = teamData.strCountry || 'N/A';
-        teamBadge.src = teamData.strTeamBadge || '';
-        teamBadge.alt = `${teamData.strTeam} Badge`;
+        badge.src = teamData.strTeamBadge;
+        badge.alt = `${teamData.strTeam} Badge`;
+        badge.style.display = 'block';
 
-        teamInfo.style.display = 'block';
         rawJson.textContent = JSON.stringify(teamData, null, 2);
-
-      } catch (error) {
-        errorDiv.textContent = error.message;
+        teamInfo.style.display = 'block';
+      } catch (err) {
+        errorDiv.textContent = err.message;
       } finally {
         loading.style.display = 'none';
       }
