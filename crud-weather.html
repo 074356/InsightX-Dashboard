@@ -4,14 +4,103 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>InsightX Dashboard - CRUD Page</title>
-  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f7fa;
+      color: #333;
+      text-align: center;
+    }
+    header {
+      background-color: #005b96;
+      color: white;
+      padding: 20px;
+    }
+    nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 10px 0 0 0;
+    }
+    nav li {
+      display: inline;
+      margin: 0 15px;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    main {
+      max-width: 800px;
+      margin: 30px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: left;
+    }
+    h2, h3 {
+      text-align: center;
+    }
+    form {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 60%;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 1em;
+      margin-left: 10px;
+      background-color: #005b96;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #004080;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #e0eaf5;
+    }
+    footer {
+      background-color: #f0f0f0;
+      padding: 15px;
+      text-align: center;
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 40px;
+    }
+  </style>
 </head>
 <body>
   <header>
     <h1>InsightX Dashboard</h1>
     <nav>
       <ul>
-        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html">🏠 Home</a></li>
         <li><a href="weather.html">🌤 Weather Dashboard</a></li>
         <li><a href="sports.html">⚽ Sports Dashboard</a></li>
         <li><a href="crud-weather.html" class="active">🛠 CRUD Page</a></li>
@@ -20,30 +109,27 @@
   </header>
 
   <main>
-    <section>
-      <h2>CRUD Feature (Placeholder)</h2>
-      <p>This page will be used for managing weather data in the future.</p>
+    <h2>CRUD Feature</h2>
+    <p>This is a demo for Create, Read, Update, and Delete operations using JavaScript only.</p>
 
-      <form id="crud-form">
-        <label for="data-input">Data Input:</label><br />
-        <input type="text" id="data-input" name="data-input" placeholder="Enter some data" required />
-        <button type="submit">Add</button>
-      </form>
+    <form id="crud-form">
+      <input type="text" id="data-input" name="data-input" placeholder="Enter data here..." required />
+      <button type="submit">Add</button>
+    </form>
 
-      <h3>Data Table</h3>
-      <table id="data-table" border="1" cellpadding="8" cellspacing="0">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Data</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Rows will appear here -->
-        </tbody>
-      </table>
-    </section>
+    <h3>Data Table</h3>
+    <table id="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Data</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows will be inserted here -->
+      </tbody>
+    </table>
   </main>
 
   <footer>
@@ -58,67 +144,55 @@
     let dataEntries = [];
     let currentId = 1;
 
-    form.addEventListener('submit', e => {
+    form.addEventListener('submit', (e) => {
       e.preventDefault();
-      addEntry(input.value.trim());
-      input.value = '';
+      const value = input.value.trim();
+      if (value) {
+        dataEntries.push({ id: currentId++, data: value });
+        input.value = '';
+        renderTable();
+      }
     });
-
-    function addEntry(data) {
-      if (data === '') return;
-
-      const entry = { id: currentId++, data };
-      dataEntries.push(entry);
-      renderTable();
-    }
 
     function renderTable() {
       tableBody.innerHTML = '';
       dataEntries.forEach(entry => {
-        const tr = document.createElement('tr');
+        const row = document.createElement('tr');
 
-        const tdId = document.createElement('td');
-        tdId.textContent = entry.id;
+        const idCell = document.createElement('td');
+        idCell.textContent = entry.id;
 
-        const tdData = document.createElement('td');
-        tdData.textContent = entry.data;
+        const dataCell = document.createElement('td');
+        dataCell.textContent = entry.data;
 
-        const tdActions = document.createElement('td');
+        const actionsCell = document.createElement('td');
 
-        // Edit button
         const editBtn = document.createElement('button');
         editBtn.textContent = 'Edit';
-        editBtn.onclick = () => editEntry(entry.id);
+        editBtn.onclick = () => {
+          const newData = prompt('Edit entry:', entry.data);
+          if (newData && newData.trim() !== '') {
+            entry.data = newData.trim();
+            renderTable();
+          }
+        };
 
-        // Delete button
-        const delBtn = document.createElement('button');
-        delBtn.textContent = 'Delete';
-        delBtn.onclick = () => deleteEntry(entry.id);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.onclick = () => {
+          dataEntries = dataEntries.filter(e => e.id !== entry.id);
+          renderTable();
+        };
 
-        tdActions.appendChild(editBtn);
-        tdActions.appendChild(delBtn);
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
 
-        tr.appendChild(tdId);
-        tr.appendChild(tdData);
-        tr.appendChild(tdActions);
+        row.appendChild(idCell);
+        row.appendChild(dataCell);
+        row.appendChild(actionsCell);
 
-        tableBody.appendChild(tr);
+        tableBody.appendChild(row);
       });
-    }
-
-    function editEntry(id) {
-      const entry = dataEntries.find(e => e.id === id);
-      if (!entry) return;
-      const newData = prompt('Edit the data:', entry.data);
-      if (newData !== null && newData.trim() !== '') {
-        entry.data = newData.trim();
-        renderTable();
-      }
-    }
-
-    function deleteEntry(id) {
-      dataEntries = dataEntries.filter(e => e.id !== id);
-      renderTable();
     }
   </script>
 </body>
