@@ -2,15 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>InsightX Dashboard</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Add some quick styles to complement your external styles.css */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f7fa;
+      color: #333;
+    }
+    header {
+      background-color: #005b96;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    nav ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 10px 0 0 0;
+    }
+    nav li {
+      display: inline;
+      margin: 0 15px;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    main {
+      padding: 30px;
+      max-width: 900px;
+      margin: 20px auto 40px auto;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    section {
+      margin-bottom: 30px;
+    }
+    section.assignment-info h2 {
+      color: #005b96;
+      margin-bottom: 10px;
+    }
+    section h2, section h3 {
+      color: #003f63;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      background-color: #eee;
+      font-size: 0.9em;
+    }
+  </style>
 </head>
 <body>
   <header>
     <h1>InsightX Dashboard</h1>
     <nav>
       <ul>
+        <li><a href="index.html">🏠 Home</a></li>
         <li><a href="weather.html">🌤 Weather Dashboard</a></li>
         <li><a href="sports.html">⚽ Sports Dashboard</a></li>
         <li><a href="crud-weather.html">🛠 CRUD Page</a></li>
@@ -24,7 +83,7 @@
       <h2>Assignment: Web-Based Dashboard Development with API Integration & CI/CD</h2>
       <p><strong>Title:</strong> "Develop and Deploy a Web Dashboard System with API Integration & CI/CD"</p>
       <p><strong>Objective:</strong> To design, develop, and deploy a web-based dashboard system that fetches data from a public API. 
-        The Assignment must includes TWO different dashboards, follow web design standards, 
+        The Assignment must include TWO different dashboards, follow web design standards, 
         and implement Continuous Integration and Continuous Deployment (CI/CD) using GitHub.</p>
       <p><strong>Course ID:</strong> 074356 </p>
       <p><strong>Course Name:</strong> INTERNET-BASED SYSTEM DEVELOPMENT METHODOLOGY </p>
