@@ -143,7 +143,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-    const apiKey = '9777fe87e12df2baea259ce51a81fa8f'; // Replace with your OpenWeatherMap API key
+    const apiKey = '06bba629fa20cb6ecda05a946534f60a'; // Replace with your OpenWeatherMap API key
 
     const form = document.getElementById('search-form');
     const cityInput = document.getElementById('city-input');
@@ -176,7 +176,7 @@
 
       try {
         // Fetch current weather
-        const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${9777fe87e12df2baea259ce51a81fa8f}`);
+        const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${06bba629fa20cb6ecda05a946534f60a}`);
         if(!weatherRes.ok) throw new Error('City not found');
         const weatherData = await weatherRes.json();
 
@@ -184,7 +184,7 @@
         rawJsonPre.textContent = JSON.stringify(weatherData, null, 2);
 
         // Fetch 5-day forecast (3-hour intervals)
-        const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${9777fe87e12df2baea259ce51a81fa8f}`);
+        const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${06bba629fa20cb6ecda05a946534f60a}`);
         if(!forecastRes.ok) throw new Error('Forecast data not found');
         const forecastData = await forecastRes.json();
 
