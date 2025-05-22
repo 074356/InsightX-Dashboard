@@ -7,7 +7,8 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       background-color: #f4f7fa;
       color: #333;
       text-align: center;
@@ -84,19 +85,6 @@
       margin-top: 30px;
       max-width: 100%;
     }
-    #raw-json {
-      text-align: left;
-      margin-top: 30px;
-      display: none;
-    }
-    #json-output {
-      background: #eee;
-      padding: 15px;
-      border-radius: 8px;
-      overflow-x: auto;
-      font-family: monospace;
-      white-space: pre-wrap;
-    }
   </style>
 </head>
 <body>
@@ -117,7 +105,7 @@
     <p>Enter a city name below to get its current weather.</p>
 
     <form id="search-form">
-      <input type="text" id="city-input" placeholder="e.g., London" required />
+      <input type="text" id="city-input" placeholder="e.g., Shah Alam" required />
       <button type="submit">Get Weather</button>
     </form>
 
@@ -133,18 +121,13 @@
     </div>
 
     <canvas id="forecastChart" width="600" height="300"></canvas>
-
-    <!-- RAW JSON DISPLAY -->
-    <div id="raw-json">
-      <h3>Raw API Data (for debugging):</h3>
-      <pre id="json-output"></pre>
-    </div>
   </main>
 
+  <!-- Chart.js library -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-    const apiKey = '06bba629fa20cb6ecda05a946534f60a'; // Replace with your working API key
+    const apiKey = '06bba629fa20cb6ecda05a946534f60a'; // Replace with your OpenWeatherMap API key
 
     const form = document.getElementById('search-form');
     const cityInput = document.getElementById('city-input');
@@ -157,15 +140,13 @@
     const humiditySpan = document.getElementById('humidity');
     const windSpan = document.getElementById('wind');
     const ctx = document.getElementById('forecastChart').getContext('2d');
-    const rawJsonDiv = document.getElementById('raw-json');
-    const jsonOutput = document.getElementById('json-output');
 
     let forecastChart;
 
     form.addEventListener('submit', e => {
       e.preventDefault();
       const city = cityInput.value.trim();
-      if(city) {
+      if (city) {
         fetchWeather(city);
       }
     });
@@ -174,29 +155,22 @@
       errorDiv.textContent = '';
       weatherInfo.style.display = 'none';
       loading.style.display = 'block';
-      rawJsonDiv.style.display = 'none';
 
       try {
         const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`);
-        if(!weatherRes.ok) throw new Error('City not found');
+        if (!weatherRes.ok) throw new Error('City not found');
         const weatherData = await weatherRes.json();
 
         const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`);
-        if(!forecastRes.ok) throw new Error('Forecast data not found');
+        if (!forecastRes.ok) throw new Error('Forecast data not found');
         const forecastData = await forecastRes.json();
 
         displayCurrentWeather(weatherData);
         displayForecastChart(forecastData);
 
-        // Show raw API response
-        rawJsonDiv.style.display = 'block';
-        jsonOutput.textContent = JSON.stringify(weatherData, null, 2);
-
-      } catch(err) {
+      } catch (err) {
         errorDiv.textContent = err.message;
-        if(forecastChart) {
-          forecastChart.destroy();
-        }
+        if (forecastChart) forecastChart.destroy();
       } finally {
         loading.style.display = 'none';
       }
@@ -216,9 +190,7 @@
       const labels = dailyData.map(item => new Date(item.dt_txt).toLocaleDateString());
       const temps = dailyData.map(item => item.main.temp);
 
-      if(forecastChart) {
-        forecastChart.destroy();
-      }
+      if (forecastChart) forecastChart.destroy();
 
       forecastChart = new Chart(ctx, {
         type: 'line',
