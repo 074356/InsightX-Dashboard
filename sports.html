@@ -7,14 +7,13 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       background-color: #f4f7fa;
       color: #333;
       text-align: center;
     }
     header {
-      background-color: #004d40;
+      background-color: #005b96;
       color: white;
       padding: 20px;
     }
@@ -56,14 +55,14 @@
       padding: 10px 15px;
       font-size: 1em;
       margin-left: 10px;
-      background-color: #004d40;
+      background-color: #005b96;
       color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #00332d;
+      background-color: #004080;
     }
     #loading {
       font-weight: bold;
@@ -82,7 +81,7 @@
     }
     #team-info img {
       max-width: 150px;
-      margin: 10px 0;
+      margin-bottom: 10px;
     }
     pre {
       background-color: #eee;
@@ -94,6 +93,7 @@
       word-wrap: break-word;
       font-size: 0.9em;
       margin-top: 20px;
+      text-align: left;
     }
   </style>
 </head>
@@ -111,11 +111,11 @@
   </header>
 
   <main>
-    <h2>Search Your Favourite Team</h2>
+    <h2>Search Your Favourite Football Team</h2>
     <p>Type a football team name (e.g., Arsenal, Manchester United)</p>
 
     <form id="search-form">
-      <input type="text" id="team-input" placeholder="e.g., Arsenal" required />
+      <input type="text" id="team-input" placeholder="Enter team name" required />
       <button type="submit">Search</button>
     </form>
 
@@ -123,14 +123,14 @@
     <div id="error"></div>
 
     <div id="team-info">
+      <img id="team-badge" src="" alt="Team Badge" />
       <h2 id="team-name"></h2>
-      <img id="team-badge" alt="Team Badge" />
-      <p><strong>Stadium:</strong> <span id="stadium"></span></p>
-      <p><strong>Country:</strong> <span id="country"></span></p>
+      <p><strong>Stadium:</strong> <span id="team-stadium"></span></p>
+      <p><strong>Country:</strong> <span id="team-country"></span></p>
     </div>
 
     <h3>Raw JSON Data (Team Info)</h3>
-    <pre id="raw-json"></pre>
+    <pre id="raw-team-json"></pre>
   </main>
 
   <script>
@@ -138,47 +138,54 @@
     const teamInput = document.getElementById('team-input');
     const loading = document.getElementById('loading');
     const errorDiv = document.getElementById('error');
-    const teamInfo = document.getElementById('team-info');
-    const teamName = document.getElementById('team-name');
+    const teamInfoDiv = document.getElementById('team-info');
     const teamBadge = document.getElementById('team-badge');
-    const stadium = document.getElementById('stadium');
-    const country = document.getElementById('country');
-    const rawJson = document.getElementById('raw-json');
+    const teamName = document.getElementById('team-name');
+    const teamStadium = document.getElementById('team-stadium');
+    const teamCountry = document.getElementById('team-country');
+    const rawJsonPre = document.getElementById('raw-team-json');
 
     form.addEventListener('submit', e => {
       e.preventDefault();
-      const team = teamInput.value.trim();
-      if (team) {
-        fetchTeamInfo(team);
+      const teamName = teamInput.value.trim();
+      if (teamName) {
+        fetchTeamInfo(teamName);
       }
     });
 
     async function fetchTeamInfo(team) {
       errorDiv.textContent = '';
-      teamInfo.style.display = 'none';
-      rawJson.textContent = '';
+      teamInfoDiv.style.display = 'none';
+      rawJsonPre.textContent = '';
       loading.style.display = 'block';
 
       try {
-        const response = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(team)}`);
-        if (!response.ok) throw new Error('Failed to fetch');
-        const data = await response.json();
+        const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(team)}`);
+
+        if (!res.ok) throw new Error('Failed to fetch team data');
+
+        const data = await res.json();
 
         if (!data.teams || data.teams.length === 0) {
-          throw new Error('Team not found');
+          throw new Error('No team found with that name');
         }
 
         const teamData = data.teams[0];
-        teamName.textContent = teamData.strTeam;
-        teamBadge.src = teamData.strTeamBadge || '';
-        teamBadge.alt = `${teamData.strTeam} Badge`;
-        stadium.textContent = teamData.strStadium;
-        country.textContent = teamData.strCountry;
 
-        teamInfo.style.display = 'block';
-        rawJson.textContent = JSON.stringify(teamData, null, 2);
-      } catch (err) {
-        errorDiv.textContent = err.message;
+        // Set badge image safely, fallback if missing
+        teamBadge.src = teamData.strTeamBadge || '';
+        teamBadge.alt = teamData.strTeam || 'Team Badge';
+
+        teamName.textContent = teamData.strTeam || 'N/A';
+        teamStadium.textContent = teamData.strStadium || 'N/A';
+        teamCountry.textContent = teamData.strCountry || 'N/A';
+
+        rawJsonPre.textContent = JSON.stringify(teamData, null, 2);
+
+        teamInfoDiv.style.display = 'block';
+
+      } catch (error) {
+        errorDiv.textContent = error.message;
       } finally {
         loading.style.display = 'none';
       }
