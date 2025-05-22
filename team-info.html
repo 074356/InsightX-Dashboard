@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Team Info Lookup</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #e6f0f5;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #1f3b57;
+    }
+    .search-box {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      width: 300px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .team-card {
+      max-width: 700px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .team-card img {
+      width: 100px;
+      margin-bottom: 10px;
+    }
+    .team-details {
+      text-align: center;
+    }
+    .team-details h2 {
+      margin: 10px 0;
+    }
+    .team-details p {
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <h1>Search Football Team Info</h1>
+  <div class="search-box">
+    <input type="text" id="teamInput" placeholder="Enter team name (e.g., Arsenal)" />
+    <button onclick="searchTeam()">Search</button>
+  </div>
+
+  <div id="teamResult"></div>
+
+  <script>
+    async function searchTeam() {
+      const teamName = document.getElementById('teamInput').value.trim();
+      if (!teamName) return;
+
+      const API_URL = `https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(teamName)}`;
+      const res = await fetch(API_URL);
+      const data = await res.json();
+
+      const team = data.teams ? data.teams[0] : null;
+      const container = document.getElementById('teamResult');
+      container.innerHTML = '';
+
+      if (team) {
+        container.innerHTML = `
+          <div class="team-card">
+            <div class="team-details">
+              <img src="${team.strTeamBadge}" alt="${team.strTeam} logo"/>
+              <h2>${team.strTeam}</h2>
+              <p><strong>Stadium:</strong> ${team.strStadium}</p>
+              <p><strong>League:</strong> ${team.strLeague}</p>
+              <p><strong>Country:</strong> ${team.strCountry}</p>
+              <p>${team.strDescriptionEN.slice(0, 300)}...</p>
+            </div>
+          </div>
+        `;
+      } else {
+        container.innerHTML = "<p style='text-align:center;'>No team found.</p>";
+      }
+    }
+  </script>
+</body>
+</html>
