@@ -80,8 +80,15 @@
       text-align: center;
     }
     #team-info img {
-      max-width: 150px;
+      width: 150px;
+      height: 150px;
+      object-fit: contain;
       margin-bottom: 10px;
+      border: 2px solid #005b96;
+      background-color: #e0e7ef;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
     }
     pre {
       background-color: #eee;
@@ -147,9 +154,9 @@
 
     form.addEventListener('submit', e => {
       e.preventDefault();
-      const teamName = teamInput.value.trim();
-      if (teamName) {
-        fetchTeamInfo(teamName);
+      const teamNameInput = teamInput.value.trim();
+      if (teamNameInput) {
+        fetchTeamInfo(teamNameInput);
       }
     });
 
@@ -172,8 +179,8 @@
 
         const teamData = data.teams[0];
 
-        // Set badge image safely, fallback if missing
-        teamBadge.src = teamData.strTeamBadge || '';
+        // Show badge or placeholder if missing
+        teamBadge.src = teamData.strTeamBadge || 'https://via.placeholder.com/150?text=No+Image';
         teamBadge.alt = teamData.strTeam || 'Team Badge';
 
         teamName.textContent = teamData.strTeam || 'N/A';
