@@ -43,6 +43,7 @@
       padding: 25px;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: left;
     }
     input[type="text"] {
       padding: 10px;
@@ -85,6 +86,17 @@
       margin-top: 30px;
       max-width: 100%;
     }
+    pre {
+      background-color: #eee;
+      padding: 15px;
+      border-radius: 5px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 0.9em;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -121,6 +133,9 @@
     </div>
 
     <canvas id="forecastChart" width="600" height="300"></canvas>
+
+    <h3>Raw JSON Data (Current Weather)</h3>
+    <pre id="raw-weather-json"></pre>
   </main>
 
   <!-- Chart.js library -->
@@ -139,6 +154,7 @@
     const conditionSpan = document.getElementById('condition');
     const humiditySpan = document.getElementById('humidity');
     const windSpan = document.getElementById('wind');
+    const rawJsonPre = document.getElementById('raw-weather-json');
     const ctx = document.getElementById('forecastChart').getContext('2d');
 
     let forecastChart;
@@ -154,6 +170,7 @@
     async function fetchWeather(city) {
       errorDiv.textContent = '';
       weatherInfo.style.display = 'none';
+      rawJsonPre.textContent = '';
       loading.style.display = 'block';
 
       try {
@@ -167,6 +184,7 @@
 
         displayCurrentWeather(weatherData);
         displayForecastChart(forecastData);
+        displayRawJson(weatherData);
 
       } catch (err) {
         errorDiv.textContent = err.message;
@@ -183,6 +201,10 @@
       humiditySpan.textContent = data.main.humidity;
       windSpan.textContent = data.wind.speed;
       weatherInfo.style.display = 'block';
+    }
+
+    function displayRawJson(data) {
+      rawJsonPre.textContent = JSON.stringify(data, null, 2);
     }
 
     function displayForecastChart(data) {
