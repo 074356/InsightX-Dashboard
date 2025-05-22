@@ -4,19 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Weather Dashboard - InsightX</title>
-  <link rel="stylesheet" href="styles.css" />
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0; padding: 0;
       background-color: #f4f7fa;
       color: #333;
+      text-align: center;
     }
     header {
       background-color: #005b96;
       color: white;
       padding: 20px;
-      text-align: center;
     }
     nav ul {
       list-style: none;
@@ -37,13 +36,12 @@
       text-decoration: underline;
     }
     main {
-      max-width: 600px;
+      max-width: 700px;
       margin: 30px auto;
       background: white;
       padding: 25px;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      text-align: center;
     }
     input[type="text"] {
       padding: 10px;
@@ -65,25 +63,28 @@
     button:hover {
       background-color: #004080;
     }
-    .weather-result {
-      margin-top: 25px;
+    #loading {
+      font-weight: bold;
+      margin-top: 15px;
+      display: none;
+      color: #007bff;
     }
-    .weather-result h2 {
+    #error {
+      color: red;
+      margin-top: 15px;
+    }
+    #weather-info {
+      margin-top: 20px;
+      display: none;
+    }
+    #weather-info h2 {
       margin-bottom: 5px;
     }
-    .weather-icon {
-      width: 80px;
-      height: 80px;
-    }
-    #tempChart {
+    canvas {
       margin-top: 30px;
       max-width: 100%;
-      height: 300px;
     }
   </style>
-
-  <!-- Add Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <header>
@@ -101,118 +102,146 @@
   <main>
     <h2>Check Current Weather</h2>
     <p>Enter a city name below to get its current weather.</p>
-    <input type="text" id="cityInput" placeholder="e.g., London" />
-    <button onclick="getWeather()">Get Weather</button>
 
-    <div class="weather-result" id="weatherResult"></div>
+    <form id="search-form">
+      <input type="text" id="city-input" placeholder="e.g., London" required />
+      <button type="submit">Get Weather</button>
+    </form>
 
-    <!-- Canvas for temperature chart -->
-    <canvas id="tempChart"></canvas>
+    <div id="loading">Loading...</div>
+    <div id="error"></div>
+
+    <div id="weather-info">
+      <h2 id="city-name"></h2>
+      <p id="condition"></p>
+      <p>Temperature: <span id="temp"></span>°C</p>
+      <p>Humidity: <span id="humidity"></span>%</p>
+      <p>Wind Speed: <span id="wind"></span> m/s</p>
+    </div>
+
+    <canvas id="forecastChart" width="600" height="300"></canvas>
   </main>
 
+  <!-- Chart.js library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script>
-    const API_KEY = "06bba629fa20cb6ecda05a946534f60a"; // Your API key
-    const tempChartCanvas = document.getElementById('tempChart');
-    let tempChart;  // Chart.js instance
+    const apiKey = '06bba629fa20cb6ecda05a946534f60a'; // Your OpenWeatherMap API key
 
-    async function getWeather() {
-      const city = document.getElementById('cityInput').value.trim();
-      const resultDiv = document.getElementById('weatherResult');
+    const form = document.getElementById('search-form');
+    const cityInput = document.getElementById('city-input');
+    const loading = document.getElementById('loading');
+    const errorDiv = document.getElementById('error');
+    const weatherInfo = document.getElementById('weather-info');
+    const cityNameSpan = document.getElementById('city-name');
+    const tempSpan = document.getElementById('temp');
+    const conditionSpan = document.getElementById('condition');
+    const humiditySpan = document.getElementById('humidity');
+    const windSpan = document.getElementById('wind');
+    const ctx = document.getElementById('forecastChart').getContext('2d');
 
-      if (!city) {
-        resultDiv.innerHTML = '<p style="color:red;">Please enter a city name.</p>';
-        if(tempChart) tempChart.destroy();
-        return;
+    let forecastChart;
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const city = cityInput.value.trim();
+      if(city) {
+        fetchWeather(city);
       }
+    });
 
-      resultDiv.innerHTML = '<p>Loading current weather and forecast...</p>';
+    async function fetchWeather(city) {
+      errorDiv.textContent = '';
+      weatherInfo.style.display = 'none';
+      loading.style.display = 'block';
 
       try {
-        // Fetch current weather data
-        const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&units=metric&appid=${API_KEY}`;
-        const weatherResp = await fetch(weatherUrl);
-        if (!weatherResp.ok) throw new Error('City not found');
-        const weatherData = await weatherResp.json();
+        // Fetch current weather
+        const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`);
+        if(!weatherRes.ok) throw new Error('City not found');
+        const weatherData = await weatherRes.json();
 
-        // Display current weather
-        resultDiv.innerHTML = `
-          <h2>Weather in ${weatherData.name}, ${weatherData.sys.country}</h2>
-          <img class="weather-icon" src="https://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png" alt="${weatherData.weather[0].description}" />
-          <p><strong>${weatherData.weather[0].main}</strong> - ${weatherData.weather[0].description}</p>
-          <p>Temperature: ${weatherData.main.temp}°C</p>
-          <p>Humidity: ${weatherData.main.humidity}%</p>
-          <p>Wind Speed: ${weatherData.wind.speed} m/s</p>
-        `;
+        // Fetch 5-day forecast (3-hour intervals)
+        const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`);
+        if(!forecastRes.ok) throw new Error('Forecast data not found');
+        const forecastData = await forecastRes.json();
 
-        // Fetch 5-day forecast data
-        const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&units=metric&appid=${API_KEY}`;
-        const forecastResp = await fetch(forecastUrl);
-        if (!forecastResp.ok) throw new Error('Forecast data not available');
-        const forecastData = await forecastResp.json();
+        displayCurrentWeather(weatherData);
+        displayForecastChart(forecastData);
 
-        // Extract daily temperatures at 12:00:00 for next 5 days
-        const dailyTemps = [];
-        const dailyLabels = [];
-        const seenDates = new Set();
-
-        for (const item of forecastData.list) {
-          const [date, time] = item.dt_txt.split(' ');
-          if (time === "12:00:00" && !seenDates.has(date)) {
-            seenDates.add(date);
-            dailyLabels.push(date);
-            dailyTemps.push(item.main.temp);
-          }
-          if (dailyTemps.length >= 5) break;
+      } catch(err) {
+        errorDiv.textContent = err.message;
+        if(forecastChart) {
+          forecastChart.destroy();
         }
+      } finally {
+        loading.style.display = 'none';
+      }
+    }
 
-        // Destroy previous chart if exists
-        if (tempChart) tempChart.destroy();
+    function displayCurrentWeather(data) {
+      cityNameSpan.textContent = data.name + ', ' + data.sys.country;
+      tempSpan.textContent = data.main.temp.toFixed(1);
+      conditionSpan.textContent = data.weather[0].description;
+      humiditySpan.textContent = data.main.humidity;
+      windSpan.textContent = data.wind.speed;
 
-        // Create new Chart.js line chart
-        tempChart = new Chart(tempChartCanvas, {
-          type: 'line',
-          data: {
-            labels: dailyLabels,
-            datasets: [{
-              label: 'Temperature (°C)',
-              data: dailyTemps,
-              borderColor: 'rgba(0, 91, 150, 1)',
-              backgroundColor: 'rgba(0, 91, 150, 0.2)',
-              fill: true,
-              tension: 0.3,
-              pointRadius: 5,
-              pointHoverRadius: 7,
-              borderWidth: 2,
-            }]
+      weatherInfo.style.display = 'block';
+    }
+
+    function displayForecastChart(data) {
+      // Prepare data for next 5 days (take one data point per day around 12:00)
+      const dailyData = data.list.filter(item => item.dt_txt.includes('12:00:00'));
+      const labels = dailyData.map(item => new Date(item.dt_txt).toLocaleDateString());
+      const temps = dailyData.map(item => item.main.temp);
+
+      if(forecastChart) {
+        forecastChart.destroy();
+      }
+
+      forecastChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Daily Temperature (°C)',
+            data: temps,
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              labels: { color: '#333', font: { size: 14 } }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+            }
           },
-          options: {
-            scales: {
-              y: {
-                suggestedMin: Math.min(...dailyTemps) - 5,
-                suggestedMax: Math.max(...dailyTemps) + 5,
-                title: {
-                  display: true,
-                  text: '°C'
-                }
-              },
-              x: {
-                title: {
-                  display: true,
-                  text: 'Date'
-                }
+          scales: {
+            y: {
+              beginAtZero: false,
+              title: {
+                display: true,
+                text: 'Temperature (°C)'
               }
             },
-            plugins: {
-              legend: { display: true },
-              tooltip: { enabled: true }
+            x: {
+              title: {
+                display: true,
+                text: 'Date'
+              }
             }
           }
-        });
-
-      } catch (error) {
-        resultDiv.innerHTML = `<p style="color:red;">${error.message}</p>`;
-        if(tempChart) tempChart.destroy();
-      }
+        }
+      });
     }
   </script>
 </body>
