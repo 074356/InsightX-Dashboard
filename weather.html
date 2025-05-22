@@ -174,11 +174,11 @@
       loading.style.display = 'block';
 
       try {
-        const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`);
+        const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${06bba629fa20cb6ecda05a946534f60a}`);
         if (!weatherRes.ok) throw new Error('City not found');
         const weatherData = await weatherRes.json();
 
-        const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`);
+        const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${06bba629fa20cb6ecda05a946534f60a}`);
         if (!forecastRes.ok) throw new Error('Forecast data not found');
         const forecastData = await forecastRes.json();
 
