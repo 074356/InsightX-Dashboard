@@ -1,51 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>InsightX Dashboard – Sports (EPL Teams)</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <title>EPL Teams - Sports Dashboard</title>
+  <style>
+    body { font-family: Arial; background: #f9f9f9; padding: 20px; text-align: center; }
+    .team { 
+      display: inline-block; 
+      border: 1px solid #ccc; 
+      margin: 10px; 
+      padding: 15px; 
+      width: 200px; 
+      background: #fff; 
+      border-radius: 10px; 
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .team img { width: 100px; height: auto; margin-bottom: 10px; }
+    h1 { color: #333; }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Sports Dashboard – EPL Teams Stats</h1>
-    <nav>
-      <ul class="nav-menu">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="weather.html">Weather Dashboard</a></li>
-        <li><a href="sports.html" class="active">Sports Dashboard</a></li>
-        <li><a href="crud-weather.html">CRUD Page</a></li>
-      </ul>
-    </nav>
-  </header>
 
-  <main>
-    <section>
-      <h2>Search EPL Team</h2>
-      <input type="text" id="teamInput" placeholder="Enter team name (e.g., Arsenal)" />
-      <button id="searchBtn">Search</button>
-      <p id="message" style="color:red;"></p>
-    </section>
+  <h1>🏆 EPL Teams - TheSportsDB API</h1>
+  <div id="teams"></div>
 
-    <section id="teamInfo" style="display:none;">
-      <h3>Team Info</h3>
-      <p><strong>Name:</strong> <span id="teamName"></span></p>
-      <p><strong>Stadium:</strong> <span id="stadium"></span></p>
-      <p><strong>Description:</strong> <span id="description"></span></p>
-      <img id="teamBadge" alt="Team Badge" width="150" />
-    </section>
+  <script>
+    fetch('https://www.thesportsdb.com/api/v1/json/3/search_all_teams.php?l=English%20Premier%20League')
+      .then(response => response.json())
+      .then(data => {
+        const teams = data.teams;
+        const container = document.getElementById('teams');
+        teams.forEach(team => {
+          const div = document.createElement('div');
+          div.className = 'team';
+          div.innerHTML = `
+            <h3>${team.strTeam}</h3>
+            <img src="${team.strTeamBadge}" alt="Badge of ${team.strTeam}">
+            <p><strong>Stadium:</strong> ${team.strStadium}</p>
+          `;
+          container.appendChild(div);
+        });
+      })
+      .catch(error => {
+        document.getElementById('teams').innerHTML = '<p>⚠️ Failed to load team data.</p>';
+        console.error('Error fetching data:', error);
+      });
+  </script>
 
-    <section id="eventsSection" style="display:none;">
-      <h3>Upcoming Events</h3>
-      <canvas id="eventsChart"></canvas>
-    </section>
-  </main>
-
-  <footer>
-    <p>&copy; 2025 InsightX Dashboard. All rights reserved.</p>
-  </footer>
-
-  <script src="sports.js"></script>
 </body>
 </html>
