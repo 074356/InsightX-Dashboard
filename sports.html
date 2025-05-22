@@ -82,13 +82,11 @@
     #team-info img {
       width: 150px;
       height: 150px;
-      object-fit: contain;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #ccc;
       margin-bottom: 10px;
-      border: 2px solid #005b96;
-      background-color: #e0e7ef;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
+      background-color: #f0f0f0;
     }
     pre {
       background-color: #eee;
@@ -154,9 +152,9 @@
 
     form.addEventListener('submit', e => {
       e.preventDefault();
-      const teamNameInput = teamInput.value.trim();
-      if (teamNameInput) {
-        fetchTeamInfo(teamNameInput);
+      const teamName = teamInput.value.trim();
+      if (teamName) {
+        fetchTeamInfo(teamName);
       }
     });
 
@@ -179,8 +177,9 @@
 
         const teamData = data.teams[0];
 
-        // Show badge or placeholder if missing
-        teamBadge.src = teamData.strTeamBadge || 'https://via.placeholder.com/150?text=No+Image';
+        // Set badge image or fallback
+        const badgeUrl = teamData.strTeamBadge || `https://source.unsplash.com/300x300/?${encodeURIComponent(team)}+football`;
+        teamBadge.src = badgeUrl;
         teamBadge.alt = teamData.strTeam || 'Team Badge';
 
         teamName.textContent = teamData.strTeam || 'N/A';
@@ -188,7 +187,6 @@
         teamCountry.textContent = teamData.strCountry || 'N/A';
 
         rawJsonPre.textContent = JSON.stringify(teamData, null, 2);
-
         teamInfoDiv.style.display = 'block';
 
       } catch (error) {
