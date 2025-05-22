@@ -1,51 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>EPL Teams - Sports Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upcoming EPL Matches</title>
   <style>
-    body { font-family: Arial; background: #f9f9f9; padding: 20px; text-align: center; }
-    .team { 
-      display: inline-block; 
-      border: 1px solid #ccc; 
-      margin: 10px; 
-      padding: 15px; 
-      width: 200px; 
-      background: #fff; 
-      border-radius: 10px; 
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      padding: 20px;
+      color: #333;
     }
-    .team img { width: 100px; height: auto; margin-bottom: 10px; }
-    h1 { color: #333; }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    .match-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px auto;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      max-width: 600px;
+    }
+    .teams {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .team {
+      text-align: center;
+      width: 40%;
+    }
+    .team img {
+      width: 60px;
+      height: 60px;
+    }
+    .vs {
+      font-size: 1.5em;
+      color: #555;
+    }
+    .date {
+      text-align: center;
+      margin-top: 10px;
+      color: #555;
+    }
   </style>
 </head>
 <body>
-
-  <h1>🏆 EPL Teams - TheSportsDB API</h1>
-  <div id="teams"></div>
+  <h1>Upcoming EPL Matches</h1>
+  <div id="matches"></div>
 
   <script>
-    fetch('https://www.thesportsdb.com/api/v1/json/3/search_all_teams.php?l=English%20Premier%20League')
-      .then(response => response.json())
-      .then(data => {
-        const teams = data.teams;
-        const container = document.getElementById('teams');
-        teams.forEach(team => {
-          const div = document.createElement('div');
-          div.className = 'team';
-          div.innerHTML = `
-            <h3>${team.strTeam}</h3>
-            <img src="${team.strTeamBadge}" alt="Badge of ${team.strTeam}">
-            <p><strong>Stadium:</strong> ${team.strStadium}</p>
-          `;
-          container.appendChild(div);
-        });
-      })
-      .catch(error => {
-        document.getElementById('teams').innerHTML = '<p>⚠️ Failed to load team data.</p>';
-        console.error('Error fetching data:', error);
-      });
-  </script>
+    const API_URL = "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4328"; // EPL ID
 
+    async function loadMatches() {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      const events = data.events.slice(0, 5); // Get next 5 matches
+      const container = document.getElementById("matches");
+
+      events.forEach(match => {
+        const matchCard = document.createElement("div");
+        matchCard.className = "match-card";
+
+        matchCard.innerHTML = `
+          <div class="teams">
+            <div class="team">
+              <img src="${match.strHomeTeamBadge || ''}" alt="${match.strHomeTeam}" />
+              <div>${match.strHomeTeam}</div>
+            </div>
+            <div class="vs">vs</div>
+            <div class="team">
+              <img src="${match.strAwayTeamBadge || ''}" alt="${match.strAwayTeam}" />
+              <div>${match.strAwayTeam}</div>
+            </div>
+          </div>
+          <div class="date">${match.dateEvent} ${match.strTime}</div>
+        `;
+
+        container.appendChild(matchCard);
+      });
+    }
+
+    loadMatches();
+  </script>
 </body>
 </html>
