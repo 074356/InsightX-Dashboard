@@ -55,7 +55,7 @@
     button {
       padding: 10px 15px;
       font-size: 1em;
-      margin-left: 10px;
+      margin-top: 10px;
       background-color: #005b96;
       color: white;
       border: none;
@@ -79,12 +79,42 @@
       margin-top: 20px;
       display: none;
     }
-    #weather-info h2 {
-      margin-bottom: 5px;
-    }
     canvas {
       margin-top: 30px;
       max-width: 100%;
+    }
+    #report-section {
+      margin-top: 40px;
+      display: none;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    .crud-btn {
+      margin: 5px;
+      padding: 5px 10px;
+      font-size: 0.9em;
+      cursor: pointer;
+    }
+    .delete-btn {
+      background-color: red;
+      color: white;
+    }
+    .edit-btn {
+      background-color: orange;
+      color: white;
     }
   </style>
 </head>
@@ -96,15 +126,12 @@
         <li><a href="index.html">🏠 Home</a></li>
         <li><a href="weather.html">🌤 Weather Dashboard</a></li>
         <li><a href="sports.html">⚽ Sports Dashboard</a></li>
-       
       </ul>
     </nav>
   </header>
 
   <main>
     <h2>Check Current Weather</h2>
-    <p>Enter a city name below to get its current weather.</p>
-
     <form id="search-form">
       <input type="text" id="city-input" placeholder="e.g., Shah Alam" required />
       <button type="submit">Get Weather</button>
@@ -114,22 +141,39 @@
     <div id="error"></div>
 
     <div id="weather-info">
-      <h2 id="city-name"></h2>
+      <h3 id="city-name"></h3>
       <p id="condition"></p>
       <p>Temperature: <span id="temp"></span>°C</p>
       <p>Humidity: <span id="humidity"></span>%</p>
       <p>Wind Speed: <span id="wind"></span> m/s</p>
+      <button onclick="addToReport()">➕ Save to Report</button>
     </div>
 
     <canvas id="forecastChart" width="600" height="300"></canvas>
+
+    <button onclick="toggleReport()">📄 View Weather Report</button>
+
+    <section id="report-section">
+      <h3>Weather Report (CRUD)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>City</th>
+            <th>Temp (°C)</th>
+            <th>Condition</th>
+            <th>Humidity (%)</th>
+            <th>Wind (m/s)</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="report-table-body"></tbody>
+      </table>
+    </section>
   </main>
 
-  <!-- Chart.js library -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <script>
-    const apiKey = '06bba629fa20cb6ecda05a946534f60a'; // Your OpenWeatherMap API key
-
+    const apiKey = '06bba629fa20cb6ecda05a946534f60a';
     const form = document.getElementById('search-form');
     const cityInput = document.getElementById('city-input');
     const loading = document.getElementById('loading');
@@ -141,44 +185,65 @@
     const humiditySpan = document.getElementById('humidity');
     const windSpan = document.getElementById('wind');
     const ctx = document.getElementById('forecastChart').getContext('2d');
+    const reportBody = document.getElementById('report-table-body');
+    const reportSection = document.getElementById('report-section');
 
     let forecastChart;
+    let reportData = [];
 
     form.addEventListener('submit', e => {
       e.preventDefault();
       const city = cityInput.value.trim();
-      if (city) {
-        fetchWeather(city);
-      }
+      if (city) fetchWeather(city);
     });
+
+    function toggleReport() {
+      reportSection.style.display = reportSection.style.display === 'none' ? 'block' : 'none';
+    }
 
     async function fetchWeather(city) {
       errorDiv.textContent = '';
       weatherInfo.style.display = 'none';
       loading.style.display = 'block';
-
       try {
-        const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`);
-        if (!weatherRes.ok) throw new Error('City not found');
-        const weatherData = await weatherRes.json();
-
-        const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`);
-        if (!forecastRes.ok) throw new Error('Forecast data not found');
-        const forecastData = await forecastRes.json();
-
-        displayCurrentWeather(weatherData);
-        displayForecastChart(forecastData);
-
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`);
+        if (!res.ok) throw new Error('City not found');
+        const data = await res.json();
+        displayWeather(data);
+        fetchForecast(city);
       } catch (err) {
         errorDiv.textContent = err.message;
-        if (forecastChart) forecastChart.destroy();
       } finally {
         loading.style.display = 'none';
       }
     }
 
-    function displayCurrentWeather(data) {
-      cityNameSpan.textContent = data.name + ', ' + data.sys.country;
+    async function fetchForecast(city) {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`);
+      const data = await res.json();
+      const dailyData = data.list.filter(item => item.dt_txt.includes('12:00:00'));
+      const labels = dailyData.map(item => new Date(item.dt_txt).toLocaleDateString());
+      const temps = dailyData.map(item => item.main.temp);
+      if (forecastChart) forecastChart.destroy();
+      forecastChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Daily Temp (°C)',
+            data: temps,
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5
+          }]
+        }
+      });
+    }
+
+    function displayWeather(data) {
+      cityNameSpan.textContent = `${data.name}, ${data.sys.country}`;
       tempSpan.textContent = data.main.temp.toFixed(1);
       conditionSpan.textContent = data.weather[0].description;
       humiditySpan.textContent = data.main.humidity;
@@ -186,56 +251,58 @@
       weatherInfo.style.display = 'block';
     }
 
-    function displayForecastChart(data) {
-      const dailyData = data.list.filter(item => item.dt_txt.includes('12:00:00'));
-      const labels = dailyData.map(item => new Date(item.dt_txt).toLocaleDateString());
-      const temps = dailyData.map(item => item.main.temp);
+    function addToReport() {
+      const newEntry = {
+        city: cityNameSpan.textContent,
+        temp: tempSpan.textContent,
+        condition: conditionSpan.textContent,
+        humidity: humiditySpan.textContent,
+        wind: windSpan.textContent
+      };
+      reportData.push(newEntry);
+      renderReport();
+    }
 
-      if (forecastChart) forecastChart.destroy();
-
-      forecastChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Daily Temperature (°C)',
-            data: temps,
-            borderColor: '#007bff',
-            backgroundColor: 'rgba(0, 123, 255, 0.2)',
-            fill: true,
-            tension: 0.3,
-            pointRadius: 5,
-            pointHoverRadius: 7,
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              labels: { color: '#333', font: { size: 14 } }
-            },
-            tooltip: {
-              mode: 'index',
-              intersect: false,
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: false,
-              title: {
-                display: true,
-                text: 'Temperature (°C)'
-              }
-            },
-            x: {
-              title: {
-                display: true,
-                text: 'Date'
-              }
-            }
-          }
-        }
+    function renderReport() {
+      reportBody.innerHTML = '';
+      reportData.forEach((item, index) => {
+        reportBody.innerHTML += `
+          <tr>
+            <td>${item.city}</td>
+            <td>${item.temp}</td>
+            <td>${item.condition}</td>
+            <td>${item.humidity}</td>
+            <td>${item.wind}</td>
+            <td>
+              <button class="crud-btn edit-btn" onclick="editEntry(${index})">Edit</button>
+              <button class="crud-btn delete-btn" onclick="deleteEntry(${index})">Delete</button>
+            </td>
+          </tr>`;
       });
+    }
+
+    function deleteEntry(index) {
+      if (confirm('Delete this entry?')) {
+        reportData.splice(index, 1);
+        renderReport();
+      }
+    }
+
+    function editEntry(index) {
+      const entry = reportData[index];
+      const updatedCity = prompt('City:', entry.city);
+      const updatedTemp = prompt('Temp:', entry.temp);
+      const updatedCond = prompt('Condition:', entry.condition);
+      const updatedHum = prompt('Humidity:', entry.humidity);
+      const updatedWind = prompt('Wind:', entry.wind);
+      reportData[index] = {
+        city: updatedCity,
+        temp: updatedTemp,
+        condition: updatedCond,
+        humidity: updatedHum,
+        wind: updatedWind
+      };
+      renderReport();
     }
   </script>
 </body>
