@@ -8,7 +8,8 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       background-color: #f4f7fa;
       color: #333;
       text-align: center;
@@ -184,16 +185,14 @@
         }
 
         const team = data.teams[0];
-
-        const fallbackImage = `https://source.unsplash.com/300x300/?${encodeURIComponent(teamName + ' football logo')}`;
+        const fallbackImage = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Soccer_ball_animated.svg/240px-Soccer_ball_animated.svg.png';
 
         if (team.strTeamBadge && team.strTeamBadge.startsWith('http')) {
           badge.src = team.strTeamBadge;
         } else {
-          badge.src = fallbackImage;
+          badge.src = `https://source.unsplash.com/300x300/?${encodeURIComponent(teamName + ' football badge')}`;
         }
 
-        // Always set error fallback for broken images
         badge.onerror = () => {
           badge.onerror = null;
           badge.src = fallbackImage;
