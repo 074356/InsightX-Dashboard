@@ -8,8 +8,7 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       background-color: #f4f7fa;
       color: #333;
       text-align: center;
@@ -117,7 +116,7 @@
       <ul>
         <li><a href="index.html">🏠 Home</a></li>
         <li><a href="weather.html">🌤 Weather Dashboard</a></li>
-        <li><a href="sports.html" class="active">⚽ Sports Dashboard</a></li>
+        <li><a href="sports.html">⚽ Sports Dashboard</a></li>
       </ul>
     </nav>
   </header>
@@ -187,18 +186,15 @@
         const team = data.teams[0];
         const fallbackImage = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Soccer_ball_animated.svg/240px-Soccer_ball_animated.svg.png';
 
-        if (team.strTeamBadge && team.strTeamBadge.startsWith('http')) {
-          badge.src = team.strTeamBadge;
-        } else {
-          badge.src = `https://source.unsplash.com/300x300/?${encodeURIComponent(teamName + ' football badge')}`;
-        }
+        badge.src = team.strTeamBadge || fallbackImage;
+        badge.alt = team.strTeam || "Team Badge";
 
+        // fallback if image fails to load
         badge.onerror = () => {
           badge.onerror = null;
           badge.src = fallbackImage;
         };
 
-        badge.alt = team.strTeam || "Team Badge";
         name.textContent = team.strTeam || 'N/A';
         stadium.textContent = team.strStadium || 'N/A';
         country.textContent = team.strCountry || 'N/A';
