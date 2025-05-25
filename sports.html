@@ -2,49 +2,51 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sports Dashboard - InsightX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sports Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       background-color: #f4f7fa;
       color: #333;
       text-align: center;
     }
+
     header {
       background-color: #005b96;
       color: white;
       padding: 20px;
     }
-    nav ul {
-      list-style: none;
-      padding: 0;
-      margin: 10px 0 0 0;
+
+    nav {
+      margin-top: 10px;
     }
-    nav li {
-      display: inline;
-      margin: 0 15px;
-    }
+
     nav a {
       color: white;
       text-decoration: none;
+      margin: 0 15px;
       font-weight: bold;
       font-size: 1.1em;
     }
+
     nav a:hover {
       text-decoration: underline;
     }
+
     main {
       max-width: 800px;
       margin: 30px auto;
       background: white;
       padding: 25px;
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       text-align: left;
     }
+
     input[type="text"] {
       padding: 10px;
       width: 70%;
@@ -52,6 +54,7 @@
       border: 1px solid #ccc;
       border-radius: 4px;
     }
+
     button {
       padding: 10px 15px;
       font-size: 1em;
@@ -62,41 +65,36 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #004080;
     }
-    #team-info img {
+
+    #teamBadge img {
       width: 150px;
       height: 150px;
+      margin-top: 20px;
+      object-fit: contain;
       border-radius: 8px;
       border: 2px solid #ccc;
-      margin: 20px auto;
-      display: block;
-      object-fit: contain;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
+
     th, td {
       border: 1px solid #ccc;
       padding: 10px;
       text-align: left;
     }
+
     th {
       background-color: #f2f2f2;
     }
-    #chart-container, #events-container {
-      margin-top: 30px;
-    }
-    #loading, #error {
-      margin-top: 15px;
-      font-weight: bold;
-    }
-    #error {
-      color: red;
-    }
+
     @media (max-width: 600px) {
       input[type="text"] {
         width: 100%;
@@ -113,123 +111,105 @@
   <header>
     <h1>InsightX Dashboard</h1>
     <nav>
-      <ul>
-        <li><a href="index.html">🏠 Home</a></li>
-        <li><a href="weather.html">🌤 Weather</a></li>
-        <li><a href="sports.html">⚽ Sports</a></li>
-      </ul>
+      <a href="index.html">🏠 Home</a>
+      <a href="weather.html">🌤️ Weather</a>
+      <a href="sports.html">⚽ Sports</a>
     </nav>
   </header>
 
   <main>
-    <h2>Search Your Favourite Football Team</h2>
-    <p>Type a football team name (e.g., Arsenal, Manchester United)</p>
+    <section class="dashboard-section">
+      <div class="card">
+        <h2>Search Your Favourite Football Team</h2>
+        <p>Type a football team name (e.g., Arsenal, Manchester United)</p>
+        <input type="text" id="teamInput" placeholder="e.g., Arsenal, Manchester United" />
+        <button onclick="searchTeam()">Search</button>
 
-    <form id="search-form">
-      <input type="text" id="team-input" placeholder="Enter team name" required />
-      <button type="submit">Search</button>
-    </form>
-
-    <div id="loading" style="display:none;">Loading...</div>
-    <div id="error"></div>
-
-    <div id="team-info" style="display:none;">
-      <img id="team-badge" src="" alt="Team Badge" />
-      <table>
-        <tr><th>Team Name</th><td id="team-name"></td></tr>
-        <tr><th>Stadium</th><td id="team-stadium"></td></tr>
-        <tr><th>Country</th><td id="team-country"></td></tr>
-        <tr><th>Stadium Capacity</th><td id="team-capacity"></td></tr>
-      </table>
-
-      <div id="chart-container">
-        <canvas id="stadiumChart" width="400" height="200"></canvas>
+        <div id="teamBadge"></div>
+        <div id="teamInfo"></div>
+        <canvas id="capacityChart" width="400" height="200"></canvas>
+        <p id="errorMsg" style="color: red;"></p>
       </div>
-
-      <div id="events-container">
-        <h3>Upcoming Matches</h3>
-        <canvas id="pointsChart" width="400" height="200"></canvas>
-        <ul id="match-list"></ul>
-      </div>
-    </div>
+    </section>
   </main>
 
   <script>
-    const form = document.getElementById('search-form');
-    const teamInput = document.getElementById('team-input');
-    const loading = document.getElementById('loading');
-    const errorDiv = document.getElementById('error');
-    const teamInfo = document.getElementById('team-info');
-    const badge = document.getElementById('team-badge');
-    const name = document.getElementById('team-name');
-    const stadium = document.getElementById('team-stadium');
-    const country = document.getElementById('team-country');
-    const capacity = document.getElementById('team-capacity');
-    const matchList = document.getElementById('match-list');
-
-    let stadiumChart;
-    let pointsChart;
-
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      const teamName = teamInput.value.trim();
-      if (teamName) {
-        fetchTeamData(teamName);
+    const teamsData = {
+      "arsenal": {
+        name: "Arsenal",
+        stadium: "Emirates Stadium",
+        country: "England",
+        capacity: 60704,
+        badge: "https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg"
+      },
+      "manchester united": {
+        name: "Manchester United",
+        stadium: "Old Trafford",
+        country: "England",
+        capacity: 76962,
+        badge: "https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg"
+      },
+      "barcelona": {
+        name: "FC Barcelona",
+        stadium: "Spotify Camp Nou",
+        country: "Spain",
+        capacity: 99354,
+        badge: "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg"
+      },
+      "liverpool": {
+        name: "Liverpool",
+        stadium: "Anfield",
+        country: "England",
+        capacity: 54074,
+        badge: "https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg"
       }
-    });
+    };
 
-    async function fetchTeamData(teamName) {
-      loading.style.display = 'block';
-      errorDiv.textContent = '';
-      teamInfo.style.display = 'none';
-      matchList.innerHTML = '';
+    let chart;
 
-      try {
-        const response = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(teamName)}`);
-        const data = await response.json();
+    function searchTeam() {
+      const input = document.getElementById("teamInput").value.toLowerCase().trim();
+      const team = teamsData[input];
 
-        if (!data.teams || data.teams.length === 0) {
-          throw new Error("Team not found.");
+      const badgeContainer = document.getElementById("teamBadge");
+      const infoContainer = document.getElementById("teamInfo");
+      const errorMsg = document.getElementById("errorMsg");
+
+      if (team) {
+        badgeContainer.innerHTML = `<img src="${team.badge}" alt="${team.name} Badge" />`;
+        infoContainer.innerHTML = `
+          <table>
+            <tr><th>Team Name</th><td>${team.name}</td></tr>
+            <tr><th>Stadium</th><td>${team.stadium}</td></tr>
+            <tr><th>Country</th><td>${team.country}</td></tr>
+            <tr><th>Stadium Capacity</th><td>${team.capacity.toLocaleString()}</td></tr>
+          </table>
+        `;
+        errorMsg.textContent = "";
+        renderChart(team);
+      } else {
+        badgeContainer.innerHTML = "";
+        infoContainer.innerHTML = "";
+        errorMsg.textContent = "Team not found.";
+        if (chart) {
+          chart.destroy();
         }
-
-        const team = data.teams[0];
-        const fallbackImage = 'https://074356.github.io/InsightX-Dashboard/image/fallback.png';
-
-        badge.src = team.strTeamBadge || fallbackImage;
-        badge.alt = team.strTeam || "Team Badge";
-        badge.onerror = () => {
-          badge.onerror = null;
-          badge.src = fallbackImage;
-        };
-
-        name.textContent = team.strTeam || 'N/A';
-        stadium.textContent = team.strStadium || 'N/A';
-        country.textContent = team.strCountry || 'N/A';
-        capacity.textContent = team.intStadiumCapacity || 'N/A';
-
-        teamInfo.style.display = 'block';
-        updateStadiumChart(team.strTeam, parseInt(team.intStadiumCapacity) || 0);
-        fetchUpcomingEvents(team.idTeam);
-
-      } catch (error) {
-        errorDiv.textContent = error.message;
-      } finally {
-        loading.style.display = 'none';
       }
     }
 
-    function updateStadiumChart(teamName, capacity) {
-      const ctx = document.getElementById('stadiumChart').getContext('2d');
-      if (stadiumChart) stadiumChart.destroy();
-
-      stadiumChart = new Chart(ctx, {
-        type: 'bar',
+    function renderChart(team) {
+      const ctx = document.getElementById("capacityChart").getContext("2d");
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: "bar",
         data: {
-          labels: [teamName],
+          labels: [team.name],
           datasets: [{
-            label: 'Stadium Capacity',
-            data: [capacity],
-            backgroundColor: '#007bff'
+            label: "Stadium Capacity",
+            data: [team.capacity],
+            backgroundColor: "rgba(0, 123, 255, 0.7)",
+            borderColor: "rgba(0, 123, 255, 1)",
+            borderWidth: 1
           }]
         },
         options: {
@@ -237,59 +217,13 @@
           scales: {
             y: {
               beginAtZero: true,
-              ticks: { stepSize: 10000 }
+              ticks: {
+                stepSize: 10000
+              }
             }
           }
         }
       });
-    }
-
-    async function fetchUpcomingEvents(teamId) {
-      try {
-        const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id=${teamId}`);
-        const data = await res.json();
-
-        const ctx = document.getElementById('pointsChart').getContext('2d');
-        if (pointsChart) pointsChart.destroy();
-
-        if (!data.events || data.events.length === 0) {
-          document.getElementById('pointsChart').style.display = 'none';
-          matchList.innerHTML = "<li>No upcoming matches available.</li>";
-          return;
-        }
-
-        const labels = data.events.map(e => new Date(e.dateEvent).toLocaleDateString());
-        const points = data.events.map(() => 0); // Future matches, no scores
-
-        pointsChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [{
-              label: 'Upcoming Matches (no scores yet)',
-              data: points,
-              backgroundColor: 'orange'
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                beginAtZero: true,
-                max: 3,
-                ticks: { stepSize: 1 }
-              }
-            }
-          }
-        });
-
-        // Also display as list
-        matchList.innerHTML = data.events.map(e => `<li>${e.strEvent} (${e.dateEvent})</li>`).join("");
-
-      } catch (err) {
-        console.error("Upcoming events error:", err.message);
-        matchList.innerHTML = "<li>Error loading upcoming matches.</li>";
-      }
     }
   </script>
 </body>
