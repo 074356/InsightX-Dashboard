@@ -8,8 +8,7 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       background-color: #f4f7fa;
       color: #333;
       text-align: center;
@@ -71,7 +70,7 @@
       height: 150px;
       border-radius: 8px;
       border: 2px solid #ccc;
-      margin-bottom: 15px;
+      margin: 20px auto;
       display: block;
     }
     table {
@@ -175,10 +174,14 @@
 
         const team = data.teams[0];
 
-        // Auto fallback if image not found
-        badge.src = team.strTeamBadge || `https://source.unsplash.com/300x300/?${encodeURIComponent(teamName)}+football`;
-        badge.alt = team.strTeam || "Team Badge";
+        // ✅ Check if badge is valid, else fallback
+        if (team.strTeamBadge && team.strTeamBadge.startsWith('http')) {
+          badge.src = team.strTeamBadge;
+        } else {
+          badge.src = `https://source.unsplash.com/300x300/?${encodeURIComponent(teamName)}+football`;
+        }
 
+        badge.alt = team.strTeam;
         name.textContent = team.strTeam || 'N/A';
         stadium.textContent = team.strStadium || 'N/A';
         country.textContent = team.strCountry || 'N/A';
@@ -210,12 +213,13 @@
         },
         options: {
           responsive: true,
+          plugins: {
+            legend: { display: true }
+          },
           scales: {
             y: {
               beginAtZero: true,
-              ticks: {
-                stepSize: 10000
-              }
+              ticks: { stepSize: 10000 }
             }
           }
         }
