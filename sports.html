@@ -190,9 +190,8 @@
         }
 
         const team = data.teams[0];
+        const fallbackImage = 'https://<your-github-username>.github.io/InsightX-Dashboard/image/fallback.png'; // Replace with your actual GitHub username
 
-        // ✅ Fallback image logic
-        const fallbackImage = 'https://cdn-icons-png.flaticon.com/512/861/861060.png';
         badge.src = team.strTeamBadge || fallbackImage;
         badge.alt = team.strTeam || "Team Badge";
         badge.onerror = () => {
