@@ -87,7 +87,7 @@
     th {
       background-color: #f2f2f2;
     }
-    #chart-container {
+    #chart-container, #events-container {
       margin-top: 30px;
     }
     #loading, #error {
@@ -115,8 +115,8 @@
     <nav>
       <ul>
         <li><a href="index.html">🏠 Home</a></li>
-        <li><a href="weather.html">🌤 Weather Dashboard</a></li>
-        <li><a href="sports.html">⚽ Sports Dashboard</a></li>
+        <li><a href="weather.html">🌤 Weather</a></li>
+        <li><a href="sports.html">⚽ Sports</a></li>
       </ul>
     </nav>
   </header>
@@ -145,6 +145,11 @@
       <div id="chart-container">
         <canvas id="stadiumChart" width="400" height="200"></canvas>
       </div>
+
+      <div id="events-container">
+        <h3>Upcoming Matches</h3>
+        <canvas id="pointsChart" width="400" height="200"></canvas>
+      </div>
     </div>
   </main>
 
@@ -160,7 +165,8 @@
     const country = document.getElementById('team-country');
     const capacity = document.getElementById('team-capacity');
 
-    let chart;
+    let stadiumChart;
+    let pointsChart;
 
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -188,8 +194,6 @@
 
         badge.src = team.strTeamBadge || fallbackImage;
         badge.alt = team.strTeam || "Team Badge";
-
-        // fallback if image fails to load
         badge.onerror = () => {
           badge.onerror = null;
           badge.src = fallbackImage;
@@ -201,7 +205,8 @@
         capacity.textContent = team.intStadiumCapacity || 'N/A';
 
         teamInfo.style.display = 'block';
-        updateChart(team.strTeam, parseInt(team.intStadiumCapacity) || 0);
+        updateStadiumChart(team.strTeam, parseInt(team.intStadiumCapacity) || 0);
+        fetchUpcomingEvents(team.idTeam);
 
       } catch (error) {
         errorDiv.textContent = error.message;
@@ -210,25 +215,22 @@
       }
     }
 
-    function updateChart(teamName, capacity) {
+    function updateStadiumChart(teamName, capacity) {
       const ctx = document.getElementById('stadiumChart').getContext('2d');
-      if (chart) chart.destroy();
+      if (stadiumChart) stadiumChart.destroy();
 
-      chart = new Chart(ctx, {
+      stadiumChart = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: [teamName],
           datasets: [{
             label: 'Stadium Capacity',
             data: [capacity],
-            backgroundColor: ['#007bff']
+            backgroundColor: '#007bff'
           }]
         },
         options: {
           responsive: true,
-          plugins: {
-            legend: { display: true }
-          },
           scales: {
             y: {
               beginAtZero: true,
@@ -237,6 +239,48 @@
           }
         }
       });
+    }
+
+    async function fetchUpcomingEvents(teamId) {
+      try {
+        const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id=${teamId}`);
+        const data = await res.json();
+
+        if (!data.events || data.events.length === 0) {
+          throw new Error("No upcoming events.");
+        }
+
+        const labels = data.events.map(e => new Date(e.dateEvent).toLocaleDateString());
+        const points = data.events.map(() => 0); // Placeholder, future games
+
+        const ctx = document.getElementById('pointsChart').getContext('2d');
+        if (pointsChart) pointsChart.destroy();
+
+        pointsChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Upcoming Matches (No Scores Yet)',
+              data: points,
+              backgroundColor: 'orange'
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 3,
+                ticks: { stepSize: 1 }
+              }
+            }
+          }
+        });
+
+      } catch (err) {
+        console.error("Upcoming events error:", err.message);
+      }
     }
   </script>
 </body>
