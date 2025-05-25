@@ -8,7 +8,8 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       background-color: #f4f7fa;
       color: #333;
       text-align: center;
@@ -174,8 +175,9 @@
 
         const team = data.teams[0];
 
-        badge.src = team.strTeamBadge || '';
-        badge.alt = team.strTeam;
+        // Auto fallback if image not found
+        badge.src = team.strTeamBadge || `https://source.unsplash.com/300x300/?${encodeURIComponent(teamName)}+football`;
+        badge.alt = team.strTeam || "Team Badge";
 
         name.textContent = team.strTeam || 'N/A';
         stadium.textContent = team.strStadium || 'N/A';
@@ -207,10 +209,13 @@
           }]
         },
         options: {
+          responsive: true,
           scales: {
             y: {
               beginAtZero: true,
-              ticks: { stepSize: 10000 }
+              ticks: {
+                stepSize: 10000
+              }
             }
           }
         }
