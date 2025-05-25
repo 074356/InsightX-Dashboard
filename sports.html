@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sports Dashboard - InsightX</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -36,7 +37,7 @@
       text-decoration: underline;
     }
     main {
-      max-width: 700px;
+      max-width: 800px;
       margin: 30px auto;
       background: white;
       padding: 25px;
@@ -64,29 +65,13 @@
     button:hover {
       background-color: #004080;
     }
-    #loading {
-      font-weight: bold;
-      margin-top: 15px;
-      display: none;
-      color: #007bff;
-    }
-    #error {
-      color: red;
-      margin-top: 15px;
-    }
-    #team-info {
-      margin-top: 20px;
-      display: none;
-      text-align: center;
-    }
     #team-info img {
       width: 150px;
       height: 150px;
-      object-fit: cover;
       border-radius: 8px;
       border: 2px solid #ccc;
-      margin-bottom: 10px;
-      background-color: #f0f0f0;
+      margin-bottom: 15px;
+      display: block;
     }
     table {
       width: 100%;
@@ -94,12 +79,22 @@
       margin-top: 20px;
     }
     th, td {
-      padding: 10px;
       border: 1px solid #ccc;
+      padding: 10px;
       text-align: left;
     }
     th {
-      background-color: #e0e0e0;
+      background-color: #f2f2f2;
+    }
+    #chart-container {
+      margin-top: 30px;
+    }
+    #loading, #error {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    #error {
+      color: red;
     }
   </style>
 </head>
@@ -124,16 +119,21 @@
       <button type="submit">Search</button>
     </form>
 
-    <div id="loading">Loading...</div>
+    <div id="loading" style="display:none;">Loading...</div>
     <div id="error"></div>
 
-    <div id="team-info">
+    <div id="team-info" style="display:none;">
       <img id="team-badge" src="" alt="Team Badge" />
       <table>
         <tr><th>Team Name</th><td id="team-name"></td></tr>
         <tr><th>Stadium</th><td id="team-stadium"></td></tr>
         <tr><th>Country</th><td id="team-country"></td></tr>
+        <tr><th>Stadium Capacity</th><td id="team-capacity"></td></tr>
       </table>
+
+      <div id="chart-container">
+        <canvas id="stadiumChart" width="400" height="200"></canvas>
+      </div>
     </div>
   </main>
 
@@ -142,53 +142,79 @@
     const teamInput = document.getElementById('team-input');
     const loading = document.getElementById('loading');
     const errorDiv = document.getElementById('error');
-    const teamInfoDiv = document.getElementById('team-info');
-    const teamBadge = document.getElementById('team-badge');
-    const teamName = document.getElementById('team-name');
-    const teamStadium = document.getElementById('team-stadium');
-    const teamCountry = document.getElementById('team-country');
+    const teamInfo = document.getElementById('team-info');
+    const badge = document.getElementById('team-badge');
+    const name = document.getElementById('team-name');
+    const stadium = document.getElementById('team-stadium');
+    const country = document.getElementById('team-country');
+    const capacity = document.getElementById('team-capacity');
+
+    let chart;
 
     form.addEventListener('submit', e => {
       e.preventDefault();
       const teamName = teamInput.value.trim();
       if (teamName) {
-        fetchTeamInfo(teamName);
+        fetchTeamData(teamName);
       }
     });
 
-    async function fetchTeamInfo(team) {
-      errorDiv.textContent = '';
-      teamInfoDiv.style.display = 'none';
+    async function fetchTeamData(teamName) {
       loading.style.display = 'block';
+      errorDiv.textContent = '';
+      teamInfo.style.display = 'none';
 
       try {
-        const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(team)}`);
-
-        if (!res.ok) throw new Error('Failed to fetch team data');
-
-        const data = await res.json();
+        const response = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(teamName)}`);
+        const data = await response.json();
 
         if (!data.teams || data.teams.length === 0) {
-          throw new Error('No team found with that name');
+          throw new Error("Team not found.");
         }
 
-        const teamData = data.teams[0];
+        const team = data.teams[0];
 
-        const badgeUrl = teamData.strTeamBadge || `https://source.unsplash.com/300x300/?${encodeURIComponent(team)}+football`;
-        teamBadge.src = badgeUrl;
-        teamBadge.alt = teamData.strTeam || 'Team Badge';
+        badge.src = team.strTeamBadge || '';
+        badge.alt = team.strTeam;
 
-        teamName.textContent = teamData.strTeam || 'N/A';
-        teamStadium.textContent = teamData.strStadium || 'N/A';
-        teamCountry.textContent = teamData.strCountry || 'N/A';
+        name.textContent = team.strTeam || 'N/A';
+        stadium.textContent = team.strStadium || 'N/A';
+        country.textContent = team.strCountry || 'N/A';
+        capacity.textContent = team.intStadiumCapacity || 'N/A';
 
-        teamInfoDiv.style.display = 'block';
+        teamInfo.style.display = 'block';
+        updateChart(team.strTeam, parseInt(team.intStadiumCapacity) || 0);
 
       } catch (error) {
         errorDiv.textContent = error.message;
       } finally {
         loading.style.display = 'none';
       }
+    }
+
+    function updateChart(teamName, capacity) {
+      const ctx = document.getElementById('stadiumChart').getContext('2d');
+      if (chart) chart.destroy();
+
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: [teamName],
+          datasets: [{
+            label: 'Stadium Capacity',
+            data: [capacity],
+            backgroundColor: ['#007bff']
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 10000 }
+            }
+          }
+        }
+      });
     }
   </script>
 </body>
