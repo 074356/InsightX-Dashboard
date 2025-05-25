@@ -1,3 +1,4 @@
+//sports.js
 // DOM references
 const searchBtn = document.getElementById('searchBtn');
 const teamInput = document.getElementById('teamInput');
