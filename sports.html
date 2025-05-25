@@ -88,17 +88,18 @@
       margin-bottom: 10px;
       background-color: #f0f0f0;
     }
-    pre {
-      background-color: #eee;
-      padding: 15px;
-      border-radius: 5px;
-      max-height: 300px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      font-size: 0.9em;
+    table {
+      width: 100%;
+      border-collapse: collapse;
       margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
       text-align: left;
+    }
+    th {
+      background-color: #e0e0e0;
     }
   </style>
 </head>
@@ -110,7 +111,6 @@
         <li><a href="index.html">🏠 Home</a></li>
         <li><a href="weather.html">🌤 Weather Dashboard</a></li>
         <li><a href="sports.html">⚽ Sports Dashboard</a></li>
-       
       </ul>
     </nav>
   </header>
@@ -129,13 +129,12 @@
 
     <div id="team-info">
       <img id="team-badge" src="" alt="Team Badge" />
-      <h2 id="team-name"></h2>
-      <p><strong>Stadium:</strong> <span id="team-stadium"></span></p>
-      <p><strong>Country:</strong> <span id="team-country"></span></p>
+      <table>
+        <tr><th>Team Name</th><td id="team-name"></td></tr>
+        <tr><th>Stadium</th><td id="team-stadium"></td></tr>
+        <tr><th>Country</th><td id="team-country"></td></tr>
+      </table>
     </div>
-
-    <h3>Raw JSON Data (Team Info)</h3>
-    <pre id="raw-team-json"></pre>
   </main>
 
   <script>
@@ -148,7 +147,6 @@
     const teamName = document.getElementById('team-name');
     const teamStadium = document.getElementById('team-stadium');
     const teamCountry = document.getElementById('team-country');
-    const rawJsonPre = document.getElementById('raw-team-json');
 
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -161,7 +159,6 @@
     async function fetchTeamInfo(team) {
       errorDiv.textContent = '';
       teamInfoDiv.style.display = 'none';
-      rawJsonPre.textContent = '';
       loading.style.display = 'block';
 
       try {
@@ -177,7 +174,6 @@
 
         const teamData = data.teams[0];
 
-        // Set badge image or fallback
         const badgeUrl = teamData.strTeamBadge || `https://source.unsplash.com/300x300/?${encodeURIComponent(team)}+football`;
         teamBadge.src = badgeUrl;
         teamBadge.alt = teamData.strTeam || 'Team Badge';
@@ -186,7 +182,6 @@
         teamStadium.textContent = teamData.strStadium || 'N/A';
         teamCountry.textContent = teamData.strCountry || 'N/A';
 
-        rawJsonPre.textContent = JSON.stringify(teamData, null, 2);
         teamInfoDiv.style.display = 'block';
 
       } catch (error) {
