@@ -13,198 +13,7 @@
       color: #333;
       text-align: center;
     }
-    header <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sports Dashboard - InsightX</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-  <header>
-    <h1>InsightX Dashboard</h1>
-    <nav>
-      <a href="index.html">🏠 Home</a>
-      <a href="weather.html">🌤 Weather</a>
-      <a href="sports.html">⚽ Sports</a>
-    </nav>
-  </header>
-
-  <main class="container">
-    <h2>Search Your Favourite Football Team</h2>
-    <p>Type a football team name (e.g., Arsenal, Manchester United)</p>
-
-    <form id="search-form">
-      <input type="text" id="team-input" placeholder="Enter team name" required />
-      <button type="submit">Search</button>
-    </form>
-
-    <div id="loading" style="display:none;">Loading...</div>
-    <div id="error" style="color: red;"></div>
-
-    <div id="team-info" style="display:none;">
-      <div id="teamImageContainer">
-        <img id="teamBadge" src="" alt="Team Badge" />
-      </div>
-      <table>
-        <tr><th>Team Name</th><td id="team-name"></td></tr>
-        <tr><th>Stadium</th><td id="team-stadium"></td></tr>
-        <tr><th>Country</th><td id="team-country"></td></tr>
-        <tr><th>Stadium Capacity</th><td id="team-capacity"></td></tr>
-      </table>
-
-      <div id="chart-container">
-        <h3>Stadium Capacity Chart</h3>
-        <canvas id="stadiumChart"></canvas>
-      </div>
-
-      <div id="events-container">
-        <h3>Upcoming Matches</h3>
-        <canvas id="pointsChart"></canvas>
-      </div>
-    </div>
-  </main>
-
-  <footer>
-    &copy; 2025 InsightX Dashboard. All rights reserved.
-  </footer>
-
-  <script>
-    const form = document.getElementById('search-form');
-    const teamInput = document.getElementById('team-input');
-    const loading = document.getElementById('loading');
-    const errorDiv = document.getElementById('error');
-    const teamInfo = document.getElementById('team-info');
-    const badge = document.getElementById('teamBadge');
-    const name = document.getElementById('team-name');
-    const stadium = document.getElementById('team-stadium');
-    const country = document.getElementById('team-country');
-    const capacity = document.getElementById('team-capacity');
-
-    let stadiumChart;
-    let pointsChart;
-
-    const fallbackImage = "image/fallback.png";
-
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      const teamName = teamInput.value.trim();
-      if (teamName) {
-        fetchTeamData(teamName);
-      }
-    });
-
-    async function fetchTeamData(teamName) {
-      loading.style.display = 'block';
-      errorDiv.textContent = '';
-      teamInfo.style.display = 'none';
-
-      try {
-        const response = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(teamName)}`);
-        const data = await response.json();
-
-        if (!data.teams || data.teams.length === 0) {
-          throw new Error("Team not found.");
-        }
-
-        const team = data.teams[0];
-
-        badge.src = team.strTeamBadge || fallbackImage;
-        badge.alt = team.strTeam || "Team Badge";
-        badge.onerror = () => {
-          badge.onerror = null;
-          badge.src = fallbackImage;
-        };
-
-        name.textContent = team.strTeam || 'N/A';
-        stadium.textContent = team.strStadium || 'N/A';
-        country.textContent = team.strCountry || 'N/A';
-        capacity.textContent = team.intStadiumCapacity || 'N/A';
-
-        teamInfo.style.display = 'block';
-        updateStadiumChart(team.strTeam, parseInt(team.intStadiumCapacity) || 0);
-        fetchUpcomingEvents(team.idTeam);
-
-      } catch (error) {
-        errorDiv.textContent = error.message;
-      } finally {
-        loading.style.display = 'none';
-      }
-    }
-
-    function updateStadiumChart(teamName, capacity) {
-      const ctx = document.getElementById('stadiumChart').getContext('2d');
-      if (stadiumChart) stadiumChart.destroy();
-
-      stadiumChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: [teamName],
-          datasets: [{
-            label: 'Stadium Capacity',
-            data: [capacity],
-            backgroundColor: '#0d6efd'
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { stepSize: 10000 }
-            }
-          }
-        }
-      });
-    }
-
-    async function fetchUpcomingEvents(teamId) {
-      try {
-        const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id=${teamId}`);
-        const data = await res.json();
-
-        if (!data.events || data.events.length === 0) {
-          throw new Error("No upcoming events.");
-        }
-
-        const labels = data.events.map(e => new Date(e.dateEvent).toLocaleDateString());
-        const points = data.events.map(() => 0); // No scores yet
-
-        const ctx = document.getElementById('pointsChart').getContext('2d');
-        if (pointsChart) pointsChart.destroy();
-
-        pointsChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [{
-              label: 'Upcoming Matches',
-              data: points,
-              backgroundColor: 'orange'
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                beginAtZero: true,
-                max: 3,
-                ticks: { stepSize: 1 }
-              }
-            }
-          }
-        });
-
-      } catch (err) {
-        console.error("Upcoming events error:", err.message);
-      }
-    }
-  </script>
-</body>
-</html>
-
+    header {
       background-color: #005b96;
       color: white;
       padding: 20px;
@@ -381,7 +190,7 @@
         }
 
         const team = data.teams[0];
-        const fallbackImage = 'https://<your-github-username>.github.io/InsightX-Dashboard/image/fallback.png'; // Replace with your actual GitHub username
+        const fallbackImage = 'https://074356.github.io/InsightX-Dashboard/image/fallback.png';
 
         badge.src = team.strTeamBadge || fallbackImage;
         badge.alt = team.strTeam || "Team Badge";
@@ -442,7 +251,7 @@
         }
 
         const labels = data.events.map(e => new Date(e.dateEvent).toLocaleDateString());
-        const points = data.events.map(() => 0); // Placeholder, future games
+        const points = data.events.map(() => 0); // Placeholder
 
         const ctx = document.getElementById('pointsChart').getContext('2d');
         if (pointsChart) pointsChart.destroy();
