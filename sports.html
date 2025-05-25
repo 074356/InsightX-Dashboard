@@ -8,7 +8,8 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       background-color: #f4f7fa;
       color: #333;
       text-align: center;
@@ -134,8 +135,7 @@
     <div id="error"></div>
 
     <div id="team-info" style="display:none;">
-      <img id="team-badge" src="" alt="Team Badge" 
-           onerror="this.onerror=null;this.src='https://source.unsplash.com/300x300/?football';" />
+      <img id="team-badge" src="" alt="Team Badge" />
       <table>
         <tr><th>Team Name</th><td id="team-name"></td></tr>
         <tr><th>Stadium</th><td id="team-stadium"></td></tr>
@@ -186,11 +186,11 @@
 
         const team = data.teams[0];
 
-        // Team badge with fallback
+        // Team badge with auto Unsplash fallback
         if (team.strTeamBadge && team.strTeamBadge.startsWith('http')) {
           badge.src = team.strTeamBadge;
         } else {
-          badge.src = `https://source.unsplash.com/300x300/?${encodeURIComponent(teamName)}+football`;
+          badge.src = `https://source.unsplash.com/300x300/?${encodeURIComponent(teamName + " football team logo")}`;
         }
 
         badge.alt = team.strTeam || "Team Badge";
